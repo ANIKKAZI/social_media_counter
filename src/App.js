@@ -170,6 +170,29 @@ function App() {
   const [followers, setFollowers] = useState(DEMO_INITIAL);
   const [todayGrowth, setTodayGrowth] = useState(DEMO_GROWTH_INITIAL);
 
+  // Re-request fullscreen whenever the browser exits it (e.g. input focus on tablets).
+  // Uses the next user touch as the required gesture.
+  useEffect(() => {
+    if (!kioskReady) return;
+    const onFsChange = () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const reenter = () => {
+          requestKioskFullscreen();
+          document.removeEventListener('touchend', reenter);
+          document.removeEventListener('click', reenter);
+        };
+        document.addEventListener('touchend', reenter, { once: true, passive: false });
+        document.addEventListener('click', reenter, { once: true });
+      }
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
+  }, [kioskReady]);
+
   const handleStart = useCallback(() => {
     setKioskReady(true);
   }, []);

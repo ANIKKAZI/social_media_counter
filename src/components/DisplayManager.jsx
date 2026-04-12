@@ -175,7 +175,7 @@ export default function DisplayManager({ followers, todayGrowth, username }) {
           style={panelStyles.toggleBtn}
           onClick={() => setShowPanel(!showPanel)}
         >
-          {showPanel ? '✕ Close' : '⚙ Controls'}
+          ⚙
         </button>
 
         {showPanel && (
