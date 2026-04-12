@@ -77,24 +77,51 @@ const SPLASH_PLATFORMS = [
   },
 ];
 
-function KioskSplash({ onStart }) {
+function KioskSplash({ visible, onStart }) {
+  const splashRef = useRef(null);
+
   // Use native DOM listeners — React synthetic events are not always treated
   // as a "trusted user gesture" by the Fullscreen API on tablet browsers.
+  // Attach to the splash div itself so the gesture targets it directly.
   useEffect(() => {
+    if (!visible) return;
+    const el = splashRef.current;
+    if (!el) return;
+
     const handle = (e) => {
       e.preventDefault();
-      onStart();
+      e.stopPropagation();
+      // Request fullscreen synchronously in the same callstack as the gesture
+      const root = document.documentElement;
+      const fsPromise = root.requestFullscreen
+        ? root.requestFullscreen({ navigationUI: 'hide' })
+        : root.webkitRequestFullscreen
+        ? root.webkitRequestFullscreen()
+        : Promise.resolve();
+
+      // Wait for fullscreen to settle, then hide splash
+      const finish = () => {
+        // Small delay ensures the browser has fully committed to fullscreen
+        setTimeout(() => onStart(), 300);
+      };
+      if (fsPromise && fsPromise.then) {
+        fsPromise.then(finish).catch(finish);
+      } else {
+        finish();
+      }
     };
-    document.addEventListener('touchend', handle, { once: true, passive: false });
-    document.addEventListener('click', handle, { once: true });
+
+    el.addEventListener('touchend', handle, { passive: false });
+    el.addEventListener('click', handle);
     return () => {
-      document.removeEventListener('touchend', handle);
-      document.removeEventListener('click', handle);
+      el.removeEventListener('touchend', handle);
+      el.removeEventListener('click', handle);
     };
-  }, [onStart]);
+  }, [visible, onStart]);
 
   return (
     <div
+      ref={splashRef}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'linear-gradient(160deg, #08080f 0%, #10101c 60%, #0b0b14 100%)',
@@ -103,7 +130,9 @@ function KioskSplash({ onStart }) {
         cursor: 'pointer',
         userSelect: 'none',
         fontFamily: "'Helvetica Neue', Arial, sans-serif",
-        gap: 0,
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? 'auto' : 'none',
+        transition: 'opacity 0.4s ease',
       }}
     >
       {/* Platform icon grid */}
@@ -141,8 +170,7 @@ function App() {
   const [followers, setFollowers] = useState(DEMO_INITIAL);
   const [todayGrowth, setTodayGrowth] = useState(DEMO_GROWTH_INITIAL);
 
-  const handleStart = useCallback(async () => {
-    await requestKioskFullscreen();
+  const handleStart = useCallback(() => {
     setKioskReady(true);
   }, []);
 
@@ -188,20 +216,21 @@ function App() {
     }
   }, [session]);
 
-  if (!kioskReady) {
-    return <KioskSplash onStart={handleStart} />;
-  }
-
-  if (!session) {
-    return <SetupPage onConnect={handleConnect} />;
-  }
-
+  // Always render the real app underneath; splash is a CSS overlay on top.
+  // This avoids DOM tree swaps that cause browsers to exit fullscreen.
   return (
-    <DisplayManager
-      followers={followers}
-      todayGrowth={todayGrowth}
-      username={session.displayName || session.handle}
-    />
+    <>
+      {!session ? (
+        <SetupPage onConnect={handleConnect} />
+      ) : (
+        <DisplayManager
+          followers={followers}
+          todayGrowth={todayGrowth}
+          username={session.displayName || session.handle}
+        />
+      )}
+      <KioskSplash visible={!kioskReady} onStart={handleStart} />
+    </>
   );
 }
 
