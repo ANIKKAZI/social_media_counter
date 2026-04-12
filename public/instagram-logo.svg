@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <defs>
+    <radialGradient id="ig-gradient" cx="30%" cy="107%" r="150%" fx="30%" fy="107%">
+      <stop offset="0%" stop-color="#fdf497"/>
+      <stop offset="10%" stop-color="#fdf497"/>
+      <stop offset="25%" stop-color="#fd5949"/>
+      <stop offset="40%" stop-color="#d6249f"/>
+      <stop offset="70%" stop-color="#285AEB"/>
+      <stop offset="100%" stop-color="#285AEB"/>
+    </radialGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="100" height="100" rx="22" ry="22" fill="url(#ig-gradient)"/>
+  <!-- Camera border -->
+  <rect x="18" y="18" width="64" height="64" rx="16" ry="16"
+        fill="none" stroke="white" stroke-width="5"/>
+  <!-- Center circle -->
+  <circle cx="50" cy="50" r="16" fill="none" stroke="white" stroke-width="5"/>
+  <!-- Dot top-right -->
+  <circle cx="72" cy="28" r="4" fill="white"/>
+</svg>
