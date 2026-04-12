@@ -218,10 +218,6 @@ export default function DisplayManager({ followers, todayGrowth, username }) {
               </select>
             </div>
 
-            <div style={{ ...panelStyles.label, marginTop: '8px' }}>Display</div>
-            <button style={panelStyles.fsBtn} onClick={toggleFullscreen}>
-              ⛶ Fullscreen
-            </button>
           </div>
         )}
       </div>
