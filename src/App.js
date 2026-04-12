@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import DisplayManager from './components/DisplayManager';
 import SetupPage from './components/SetupPage';
 import './App.css';
@@ -20,11 +20,17 @@ async function fetchYouTubeSubscribers(handle, apiKey) {
 
 function requestKioskFullscreen() {
   const el = document.documentElement;
-  if (document.fullscreenElement) return;
-  if (el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' });
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-  else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  if (document.fullscreenElement) return Promise.resolve();
+  const p = el.requestFullscreen
+    ? el.requestFullscreen({ navigationUI: 'hide' })
+    : el.webkitRequestFullscreen
+    ? el.webkitRequestFullscreen()
+    : el.mozRequestFullScreen
+    ? el.mozRequestFullScreen()
+    : el.msRequestFullscreen
+    ? el.msRequestFullscreen()
+    : Promise.resolve();
+  return p ? p.catch(() => {}) : Promise.resolve();
 }
 
 /* ── Kiosk splash — covers the whole screen on first load ─────────────── */
@@ -72,10 +78,23 @@ const SPLASH_PLATFORMS = [
 ];
 
 function KioskSplash({ onStart }) {
+  // Use native DOM listeners — React synthetic events are not always treated
+  // as a "trusted user gesture" by the Fullscreen API on tablet browsers.
+  useEffect(() => {
+    const handle = (e) => {
+      e.preventDefault();
+      onStart();
+    };
+    document.addEventListener('touchend', handle, { once: true, passive: false });
+    document.addEventListener('click', handle, { once: true });
+    return () => {
+      document.removeEventListener('touchend', handle);
+      document.removeEventListener('click', handle);
+    };
+  }, [onStart]);
+
   return (
     <div
-      onClick={onStart}
-      onTouchStart={onStart}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'linear-gradient(160deg, #08080f 0%, #10101c 60%, #0b0b14 100%)',
@@ -122,8 +141,8 @@ function App() {
   const [followers, setFollowers] = useState(DEMO_INITIAL);
   const [todayGrowth, setTodayGrowth] = useState(DEMO_GROWTH_INITIAL);
 
-  const handleStart = useCallback(() => {
-    requestKioskFullscreen();
+  const handleStart = useCallback(async () => {
+    await requestKioskFullscreen();
     setKioskReady(true);
   }, []);
 
