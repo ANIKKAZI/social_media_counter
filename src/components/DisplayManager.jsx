@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Design1, Design2, Design3, Design4, Design5,
-  Design6, Design7, Design8, Design9, Design10,
+  Design6, Design7, Design8, Design9, Design10, Design11,
 } from '../designs';
 
 const designs = [
@@ -15,6 +15,7 @@ const designs = [
   { Component: Design8, name: 'Glassmorphism' },
   { Component: Design9, name: 'Bold Typography' },
   { Component: Design10, name: 'Cafe Background' },
+  { Component: Design11, name: 'Kiosk Dashboard' },
 ];
 
 const panelStyles = {

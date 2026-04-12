@@ -8,3 +8,4 @@ export { default as Design7 } from './Design7';
 export { default as Design8 } from './Design8';
 export { default as Design9 } from './Design9';
 export { default as Design10 } from './Design10';
+export { default as Design11 } from './Design11';
