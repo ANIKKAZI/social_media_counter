@@ -1,0 +1,10 @@
+export { default as Design1 } from './Design1';
+export { default as Design2 } from './Design2';
+export { default as Design3 } from './Design3';
+export { default as Design4 } from './Design4';
+export { default as Design5 } from './Design5';
+export { default as Design6 } from './Design6';
+export { default as Design7 } from './Design7';
+export { default as Design8 } from './Design8';
+export { default as Design9 } from './Design9';
+export { default as Design10 } from './Design10';
