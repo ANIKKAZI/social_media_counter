@@ -32,6 +32,8 @@ const panelStyles = {
     padding: '12px',
     gap: '8px',
     pointerEvents: 'none',
+    maxHeight: '100vh',
+    overflow: 'visible',
   },
   toggleBtn: {
     pointerEvents: 'auto',
@@ -55,6 +57,10 @@ const panelStyles = {
     flexDirection: 'column',
     gap: '10px',
     minWidth: '220px',
+    maxHeight: 'calc(100vh - 80px)',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    touchAction: 'pan-y',
   },
   label: {
     color: '#aaa',

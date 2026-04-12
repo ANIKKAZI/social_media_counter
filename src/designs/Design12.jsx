@@ -29,6 +29,12 @@ const CSS = `
     0%,100% { opacity: 1; }
     50%      { opacity: 0.3; }
   }
+  @media (max-width: 1200px) {
+    .d12-content { transform: scale(0.78); transform-origin: center center; }
+  }
+  @media (max-width: 900px) {
+    .d12-content { transform: scale(0.64); transform-origin: center center; }
+  }
 `;
 
 /* ── Instagram gradient (bottom-left → top-right, brand accurate) ───────── */
@@ -149,7 +155,6 @@ export default function Design12({ followers, todayGrowth, username }) {
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Helvetica Neue', Arial, sans-serif",
-      gap: '36px',
       overflow: 'hidden',
       position: 'relative',
     }}>
@@ -163,6 +168,11 @@ export default function Design12({ followers, todayGrowth, username }) {
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'none',
       }} />
+
+      {/* ── Scalable content wrapper ──────────────────────────────────── */}
+      <div className="d12-content" style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '36px',
+      }}>
 
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <div style={{
@@ -309,6 +319,8 @@ export default function Design12({ followers, todayGrowth, username }) {
           }}>{formatCount(animated)} Total</span>
         </div>
       </div>
+
+      </div>{/* end d12-content */}
     </div>
   );
 }

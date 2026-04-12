@@ -9,9 +9,14 @@ html, body, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
   font-family: 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  position: relative;
 }
 
 body {
@@ -21,6 +26,19 @@ body {
 /* Hide scrollbar everywhere */
 ::-webkit-scrollbar {
   display: none;
+}
+
+/* Kiosk mode: prevent text selection and context menus */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection in inputs only */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Cursor auto-hide for kiosk mode */

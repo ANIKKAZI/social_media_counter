@@ -153,7 +153,7 @@ export default function SetupPage({ onConnect }) {
   return (
     <div style={{
       width: '100%',
-      height: '100vh',
+      height: '100%',
       background: 'linear-gradient(145deg, #08080f 0%, #10101c 55%, #0b0b14 100%)',
       display: 'flex',
       alignItems: 'center',
@@ -161,7 +161,9 @@ export default function SetupPage({ onConnect }) {
       fontFamily: "'Helvetica Neue', Arial, sans-serif",
       color: '#fff',
       overflow: 'hidden',
-      position: 'relative',
+      position: 'fixed',
+      top: 0,
+      left: 0,
     }}>
       {/* Ambient glow */}
       <div style={{
@@ -183,6 +185,9 @@ export default function SetupPage({ onConnect }) {
         zIndex: 1,
         width: '500px',
         maxWidth: '92vw',
+        maxHeight: 'calc(100vh - 32px)',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
         background: 'rgba(255,255,255,0.028)',
         backdropFilter: 'blur(24px)',
         border: '1px solid rgba(255,255,255,0.06)',
