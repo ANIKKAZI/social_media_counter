@@ -153,7 +153,7 @@ export default function DisplayManager({ followers, todayGrowth, username }) {
   const { Component } = designs[activeIndex];
 
   return (
-    <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
       <div
         style={{
           position: 'absolute',
@@ -190,6 +190,11 @@ export default function DisplayManager({ followers, todayGrowth, username }) {
                 {i + 1}. {d.name}
               </button>
             ))}
+
+            <div style={panelStyles.label}>Display</div>
+            <button style={panelStyles.fsBtn} onClick={toggleFullscreen}>
+              ⛶ Fullscreen
+            </button>
 
             <div style={{ ...panelStyles.label, marginTop: '8px' }}>Auto Rotate</div>
             <div style={panelStyles.row}>

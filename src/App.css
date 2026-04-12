@@ -6,6 +6,8 @@
 }
 
 html, body, #root {
+  position: fixed;
+  inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -15,8 +17,18 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  position: relative;
+/* Fullscreen rules — fill entire screen when browser enters fullscreen */
+:fullscreen,
+:fullscreen body,
+:fullscreen #root {
+  width: 100% !important;
+  height: 100% !important;
+}
+:-webkit-full-screen,
+:-webkit-full-screen body,
+:-webkit-full-screen #root {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 body {

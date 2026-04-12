@@ -150,7 +150,7 @@ export default function Design12({ followers, todayGrowth, username }) {
 
   return (
     <div style={{
-      width: '100%', height: '100vh',
+      width: '100%', height: '100%',
       background: bgGrad,
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',

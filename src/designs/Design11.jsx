@@ -1,4 +1,4 @@
-﻿/* Design 11 – Photo-Realistic Smiirl Kiosk Mockup
+/* Design 11 � Photo-Realistic Smiirl Kiosk Mockup
  * Reclaimed-wood cafe counter | thick matte-black kiosk bezels
  * Skeuomorphic mechanical split-flap | 6 flaps, last 3 mid-flip
  * QR Code + Scan to Follow
@@ -8,14 +8,14 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useAnimatedCount } from '../hooks/useAnimatedCount';
 import { InstagramIcon, formatCount } from '../components/shared';
 
-/* ── Flap geometry ─────────────────────────────────────────────────────── */
+/* -- Flap geometry ------------------------------------------------------- */
 const FW = 110;
 const FH = 148;
 const FR = 10;
 const FG = 7;
 const FONT = '"Rockwell", "Courier New", "Georgia", serif';
 
-/* ── CSS keyframes ─────────────────────────────────────────────────────── */
+/* -- CSS keyframes ------------------------------------------------------- */
 const CSS = `
   @keyframes d11Out {
     0%   { transform: rotateX(0deg);   filter: brightness(1.0); }
@@ -33,7 +33,7 @@ const CSS = `
   }
 `;
 
-/* ── Single flap digit — full card, flips only on digit change ─────────── */
+/* -- Single flap digit � full card, flips only on digit change ----------- */
 function Flap({ digit, prevDigit }) {
   const [phase, setPhase]     = useState(null);
   const [shown, setShown]     = useState(digit);
@@ -94,7 +94,7 @@ function Flap({ digit, prevDigit }) {
   );
 }
 
-/* ── Main component ────────────────────────────────────────────────────── */
+/* -- Main component ------------------------------------------------------ */
 export default function Design11({ followers, todayGrowth, username }) {
   const animated = useAnimatedCount(followers);
 
@@ -111,7 +111,7 @@ export default function Design11({ followers, todayGrowth, username }) {
     prevRef.current = digits;
   }, [followers]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Reclaimed-wood background ──────────────────────────────────────── */
+  /* -- Reclaimed-wood background ---------------------------------------- */
   const woodBg = [
     'repeating-linear-gradient(91deg, transparent 0, transparent 22px, rgba(180,100,30,0.045) 22px, rgba(180,100,30,0.045) 23px)',
     'repeating-linear-gradient(89deg, transparent 0, transparent 38px, rgba(100,55,10,0.03) 38px, rgba(100,55,10,0.03) 40px)',
@@ -121,7 +121,7 @@ export default function Design11({ followers, todayGrowth, username }) {
 
   return (
     <div style={{
-      width: '100%', height: '100vh',
+      width: '100%', height: '100%',
       background: woodBg,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Helvetica Neue', Arial, sans-serif",
@@ -129,12 +129,12 @@ export default function Design11({ followers, todayGrowth, username }) {
     }}>
       <style>{CSS}</style>
 
-      {/* Edge vignette — simulates camera depth of field */}
+      {/* Edge vignette � simulates camera depth of field */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,0.62) 100%)' }} />
       {/* Warm ambient light from above */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '140px', pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(255,165,60,0.08) 0%, transparent 100%)' }} />
 
-      {/* ── Kiosk device — slight camera-perspective tilt ─────────────── */}
+      {/* -- Kiosk device � slight camera-perspective tilt --------------- */}
       <div style={{
         position: 'relative',
         transform: 'perspective(1500px) rotateX(2deg) rotateY(-1.5deg)',
@@ -162,7 +162,7 @@ export default function Design11({ followers, todayGrowth, username }) {
           {/* Bezel sheen */}
           <div style={{ position: 'absolute', top: '9px', left: '35px', right: '35px', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.11) 30%, rgba(255,255,255,0.11) 70%, transparent)', borderRadius: '1px' }} />
 
-          {/* ── Screen ─────────────────────────────────────────────── */}
+          {/* -- Screen ----------------------------------------------- */}
           <div style={{
             background: '#080808',
             borderRadius: '8px',
@@ -174,10 +174,10 @@ export default function Design11({ followers, todayGrowth, username }) {
           }}>
             {/* Screen warm top-glow reflection */}
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% -10%, rgba(255,200,90,0.05) 0%, transparent 60%)' }} />
-            {/* Screen glare — angled highlight */}
+            {/* Screen glare � angled highlight */}
             <div style={{ position: 'absolute', top: 0, left: '-25%', width: '55%', height: '45%', background: 'linear-gradient(135deg, rgba(255,255,255,0.028) 0%, transparent 65%)', transform: 'skewX(-12deg)', pointerEvents: 'none' }} />
 
-            {/* ── Content layout ────────────────────────────────── */}
+            {/* -- Content layout ---------------------------------- */}
             <div style={{
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
@@ -242,7 +242,7 @@ export default function Design11({ followers, todayGrowth, username }) {
                 </div>
               </div>
 
-              {/* ── Bottom strip: growth | QR | live ──────────────── */}
+              {/* -- Bottom strip: growth | QR | live ---------------- */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 width: '100%', padding: '14px 18px', marginTop: 'auto',

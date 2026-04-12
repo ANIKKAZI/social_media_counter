@@ -107,7 +107,7 @@ export default function Design13({ followers, todayGrowth, username }) {
 
   return (
     <div style={{
-      width: '100%', height: '100vh',
+      width: '100%', height: '100%',
       background: 'linear-gradient(180deg, #080808 0%, #0a0a0a 100%)',
       display: 'flex', flexDirection: 'column',
       fontFamily: "'Helvetica Neue', Arial, sans-serif",
