@@ -77,7 +77,7 @@ function KioskSplash({ visible, onStart }) {
   return (
     <div
       onClick={visible ? onStart : undefined}
-      onTouchEnd={visible ? onStart : undefined}
+      onTouchEnd={visible ? (e) => { e.preventDefault(); onStart(); } : undefined}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'linear-gradient(160deg, #08080f 0%, #10101c 60%, #0b0b14 100%)',
@@ -138,7 +138,9 @@ function App() {
   }, []);
 
   const handleStart = useCallback(() => {
-    setKioskReady(true);
+    requestKioskFullscreen();
+    // Small delay so fullscreen commits before splash fades
+    setTimeout(() => setKioskReady(true), 200);
   }, []);
 
   const handleConnect = useCallback((info) => {
@@ -150,7 +152,7 @@ function App() {
       setFollowers(DEMO_INITIAL);
       setTodayGrowth(DEMO_GROWTH_INITIAL);
     }
-    // Enter fullscreen NOW — after login there are no inputs, so it stays stable
+    // Re-enter fullscreen on display page (in case keyboard exited it on login)
     requestKioskFullscreen();
   }, []);
 

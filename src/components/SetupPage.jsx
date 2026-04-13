@@ -275,7 +275,6 @@ export default function SetupPage({ onConnect }) {
             onChange={e => { setHandle(e.target.value); setError(''); }}
             onKeyDown={handleKeyDown}
             placeholder={platform.placeholder}
-            autoFocus
             autoComplete="off"
             style={{
               width: '100%',
