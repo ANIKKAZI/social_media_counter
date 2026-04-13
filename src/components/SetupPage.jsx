@@ -100,13 +100,21 @@ async function fetchYouTubeSubscribers(handle, apiKey) {
 }
 
 /* ─── Component ─────────────────────────────────────────────────────────── */
-export default function SetupPage({ onConnect }) {
-  const [platformIndex, setPlatformIndex] = useState(0);
+export default function SetupPage({ onConnect, initialPlatformIndex = 0 }) {
+  const [platformIndex, setPlatformIndex] = useState(initialPlatformIndex);
   const [handle, setHandle] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+
+  // Sync when the user taps a specific icon on the splash screen
+  React.useEffect(() => {
+    setPlatformIndex(initialPlatformIndex);
+    setHandle('');
+    setApiKey('');
+    setError('');
+  }, [initialPlatformIndex]);
 
   const platform = PLATFORMS[platformIndex];
 
@@ -156,7 +164,7 @@ export default function SetupPage({ onConnect }) {
       height: '100%',
       background: 'linear-gradient(145deg, #08080f 0%, #10101c 55%, #0b0b14 100%)',
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       justifyContent: 'center',
       fontFamily: "'Helvetica Neue', Arial, sans-serif",
       color: '#fff',
@@ -164,7 +172,8 @@ export default function SetupPage({ onConnect }) {
       position: 'fixed',
       top: 0,
       left: 0,
-      paddingTop: '5vh',
+      right: 0,
+      bottom: 0,
     }}>
       {/* Ambient glow */}
       <div style={{
