@@ -156,7 +156,7 @@ export default function SetupPage({ onConnect }) {
       height: '100%',
       background: 'linear-gradient(145deg, #08080f 0%, #10101c 55%, #0b0b14 100%)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
       fontFamily: "'Helvetica Neue', Arial, sans-serif",
       color: '#fff',
@@ -164,6 +164,7 @@ export default function SetupPage({ onConnect }) {
       position: 'fixed',
       top: 0,
       left: 0,
+      paddingTop: '5vh',
     }}>
       {/* Ambient glow */}
       <div style={{
@@ -185,14 +186,14 @@ export default function SetupPage({ onConnect }) {
         zIndex: 1,
         width: '500px',
         maxWidth: '92vw',
-        maxHeight: 'calc(100vh - 32px)',
+        maxHeight: '90vh',
         overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
         background: 'rgba(255,255,255,0.028)',
         backdropFilter: 'blur(24px)',
         border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: '28px',
-        padding: '52px 52px 44px',
+        padding: '40px 44px 36px',
         boxShadow: '0 40px 100px rgba(0,0,0,0.55)',
       }}>
 

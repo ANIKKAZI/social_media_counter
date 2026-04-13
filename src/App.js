@@ -20,20 +20,16 @@ async function fetchYouTubeSubscribers(handle, apiKey) {
 
 function requestKioskFullscreen() {
   const el = document.documentElement;
-  if (document.fullscreenElement) return Promise.resolve();
+  if (document.fullscreenElement || document.webkitFullscreenElement) return Promise.resolve();
   const p = el.requestFullscreen
     ? el.requestFullscreen({ navigationUI: 'hide' })
     : el.webkitRequestFullscreen
     ? el.webkitRequestFullscreen()
-    : el.mozRequestFullScreen
-    ? el.mozRequestFullScreen()
-    : el.msRequestFullscreen
-    ? el.msRequestFullscreen()
     : Promise.resolve();
   return p ? p.catch(() => {}) : Promise.resolve();
 }
 
-/* ── Kiosk splash — covers the whole screen on first load ─────────────── */
+/* ── Kiosk splash — simple tap-to-continue, NO fullscreen API ─────────── */
 const SPLASH_PLATFORMS = [
   {
     label: 'Instagram',
@@ -78,50 +74,10 @@ const SPLASH_PLATFORMS = [
 ];
 
 function KioskSplash({ visible, onStart }) {
-  const splashRef = useRef(null);
-
-  // Use native DOM listeners — React synthetic events are not always treated
-  // as a "trusted user gesture" by the Fullscreen API on tablet browsers.
-  // Attach to the splash div itself so the gesture targets it directly.
-  useEffect(() => {
-    if (!visible) return;
-    const el = splashRef.current;
-    if (!el) return;
-
-    const handle = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      // Request fullscreen synchronously in the same callstack as the gesture
-      const root = document.documentElement;
-      const fsPromise = root.requestFullscreen
-        ? root.requestFullscreen({ navigationUI: 'hide' })
-        : root.webkitRequestFullscreen
-        ? root.webkitRequestFullscreen()
-        : Promise.resolve();
-
-      // Wait for fullscreen to settle, then hide splash
-      const finish = () => {
-        // Small delay ensures the browser has fully committed to fullscreen
-        setTimeout(() => onStart(), 300);
-      };
-      if (fsPromise && fsPromise.then) {
-        fsPromise.then(finish).catch(finish);
-      } else {
-        finish();
-      }
-    };
-
-    el.addEventListener('touchend', handle, { passive: false });
-    el.addEventListener('click', handle);
-    return () => {
-      el.removeEventListener('touchend', handle);
-      el.removeEventListener('click', handle);
-    };
-  }, [visible, onStart]);
-
   return (
     <div
-      ref={splashRef}
+      onClick={visible ? onStart : undefined}
+      onTouchEnd={visible ? onStart : undefined}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'linear-gradient(160deg, #08080f 0%, #10101c 60%, #0b0b14 100%)',
@@ -135,10 +91,7 @@ function KioskSplash({ visible, onStart }) {
         transition: 'opacity 0.4s ease',
       }}
     >
-      {/* Platform icon grid */}
-      <div style={{
-        display: 'flex', gap: 20, marginBottom: 40,
-      }}>
+      <div style={{ display: 'flex', gap: 20, marginBottom: 40 }}>
         {SPLASH_PLATFORMS.map((p) => (
           <div key={p.label} style={{
             width: 72, height: 72, borderRadius: 20,
@@ -150,16 +103,12 @@ function KioskSplash({ visible, onStart }) {
           </div>
         ))}
       </div>
-
-      <div style={{
-        fontSize: 36, fontWeight: 700, color: '#fff',
-        letterSpacing: '-0.5px', marginBottom: 14,
-      }}>Follower Counter</div>
-
-      <div style={{
-        fontSize: 13, color: 'rgba(255,255,255,0.3)',
-        letterSpacing: 4, textTransform: 'uppercase',
-      }}>Tap anywhere to start</div>
+      <div style={{ fontSize: 36, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px', marginBottom: 14 }}>
+        Follower Counter
+      </div>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', letterSpacing: 4, textTransform: 'uppercase' }}>
+        Tap anywhere to start
+      </div>
     </div>
   );
 }
@@ -170,12 +119,29 @@ function App() {
   const [followers, setFollowers] = useState(DEMO_INITIAL);
   const [todayGrowth, setTodayGrowth] = useState(DEMO_GROWTH_INITIAL);
 
+  // Lock the visual viewport so keyboard doesn't resize/scroll the layout
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const lock = () => {
+      document.documentElement.style.setProperty('--vvh', `${vv.height}px`);
+      document.documentElement.style.setProperty('--vvoffset', `${vv.offsetTop}px`);
+      window.scrollTo(0, 0);
+    };
+    lock();
+    vv.addEventListener('resize', lock);
+    vv.addEventListener('scroll', lock);
+    return () => {
+      vv.removeEventListener('resize', lock);
+      vv.removeEventListener('scroll', lock);
+    };
+  }, []);
+
   const handleStart = useCallback(() => {
     setKioskReady(true);
   }, []);
 
   const handleConnect = useCallback((info) => {
-    // info = { platform, handle, displayName, followers, isLive, apiKey? }
     setSession(info);
     if (info.followers != null) {
       setFollowers(info.followers);
@@ -184,6 +150,8 @@ function App() {
       setFollowers(DEMO_INITIAL);
       setTodayGrowth(DEMO_GROWTH_INITIAL);
     }
+    // Enter fullscreen NOW — after login there are no inputs, so it stays stable
+    requestKioskFullscreen();
   }, []);
 
   // Live refresh (YouTube) or demo tick
