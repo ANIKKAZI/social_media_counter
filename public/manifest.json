@@ -10,7 +10,7 @@
   ],
   "start_url": ".",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "any",
   "theme_color": "#E1306C",
   "background_color": "#000000"
 }
