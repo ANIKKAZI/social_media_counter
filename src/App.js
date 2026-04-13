@@ -119,17 +119,16 @@ function App() {
   const [followers, setFollowers] = useState(DEMO_INITIAL);
   const [todayGrowth, setTodayGrowth] = useState(DEMO_GROWTH_INITIAL);
 
-  // Lock layout so keyboard doesn't resize the visible page.
-  // When keyboard closes, re-enter fullscreen automatically.
+  // Lock scroll position and re-enter fullscreen only when keyboard fully closes.
   useEffect(() => {
     if (!kioskReady) return;
 
     const vv = window.visualViewport;
-    // Capture the initial full height (before any keyboard)
     let fullHeight = window.innerHeight;
+    let keyboardOpen = false;
+    let reenterTimer = null;
 
     const lock = () => {
-      // Force scroll to top so page doesn't shift down
       window.scrollTo(0, 0);
       document.body.scrollTop = 0;
       document.documentElement.scrollTop = 0;
@@ -137,18 +136,23 @@ function App() {
 
     const onResize = () => {
       lock();
-      if (vv) {
-        const currentHeight = vv.height;
-        // Keyboard is considered "closed" when viewport is within 100px of full height
-        const keyboardClosed = currentHeight >= fullHeight - 100;
-        if (keyboardClosed) {
-          // Update full height reference
-          fullHeight = Math.max(fullHeight, currentHeight);
-          // Re-enter fullscreen if we lost it
+      if (!vv) return;
+      const currentHeight = vv.height;
+      const wasOpen = keyboardOpen;
+      keyboardOpen = currentHeight < fullHeight - 150;
+
+      if (!keyboardOpen) {
+        fullHeight = Math.max(fullHeight, currentHeight);
+      }
+
+      // Only re-request fullscreen when keyboard transitions from open → closed
+      if (wasOpen && !keyboardOpen) {
+        clearTimeout(reenterTimer);
+        reenterTimer = setTimeout(() => {
           if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             requestKioskFullscreen();
           }
-        }
+        }, 400);
       }
     };
 
@@ -157,24 +161,13 @@ function App() {
       vv.addEventListener('resize', onResize);
       vv.addEventListener('scroll', lock);
     }
-    // Also listen for blur (keyboard dismiss) on inputs
-    const onFocusOut = () => {
-      window.scrollTo(0, 0);
-      // Slight delay for the viewport to settle after keyboard closes
-      setTimeout(() => {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          requestKioskFullscreen();
-        }
-      }, 300);
-    };
-    document.addEventListener('focusout', onFocusOut);
 
     return () => {
+      clearTimeout(reenterTimer);
       if (vv) {
         vv.removeEventListener('resize', onResize);
         vv.removeEventListener('scroll', lock);
       }
-      document.removeEventListener('focusout', onFocusOut);
     };
   }, [kioskReady]);
 
