@@ -96,15 +96,29 @@ const BASE_HEADERS = {
   'sec-ch-ua-platform': '"Windows"',
 };
 
-/**
- * Phase a: hit homepage  → collect mid, ig_did, initial csrftoken
- * Phase b: hit profile    → refresh csrftoken, get session-specific cookies
- *
- * Returns { cookieJar (Map), csrfToken (string) }
- */
-async function bootstrapSession(username) {
-  const jar = new Map();
+// Module-level session cache — reused across all poll requests.
+// Bootstrapping fresh cookies on every 20-second poll hammers Instagram's servers
+// and is the primary cause of 429 rate-limit responses.
+// We refresh the session only when it's older than SESSION_TTL_MS or missing.
+const SESSION_TTL_MS = 20 * 60 * 1000; // 20 minutes
+let _session = null; // { cookieJar: Map, csrfToken: string, refreshedAt: number }
 
+// Module-level 429 backoff — when Instagram rate-limits us we stop ALL API
+// attempts for BACKOFF_MS to let the IP-level ban expire.
+const BACKOFF_MS = 8 * 60 * 1000; // 8 minutes
+let _rateLimitedUntil = 0;
+
+/**
+ * Returns a live session (cookie jar + csrf token).
+ * Reuses the cached session if it is still fresh to avoid unnecessary requests.
+ */
+async function getSession(username) {
+  const now = Date.now();
+  if (_session && now - _session.refreshedAt < SESSION_TTL_MS) {
+    return _session;
+  }
+
+  const jar = new Map();
   const baseHeaders = {
     ...BASE_HEADERS,
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -126,8 +140,10 @@ async function bootstrapSession(username) {
   }
 
   const csrfToken = jar.get('csrftoken') || '';
-  console.log(`[instagram-proxy] cookies bootstrapped for @${username} | csrftoken=${csrfToken ? csrfToken.slice(0, 8) + '…' : 'MISSING'} | total=${jar.size}`);
-  return { cookieJar: jar, csrfToken };
+  console.log(`[instagram-proxy] session bootstrapped | csrftoken=${csrfToken ? csrfToken.slice(0, 8) + '…' : 'MISSING'} | cookies=${jar.size}`);
+
+  _session = { cookieJar: jar, csrfToken, refreshedAt: Date.now() };
+  return _session;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,6 +151,14 @@ async function bootstrapSession(username) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function tryWebProfileInfo(username, cookieJar, csrfToken) {
+  // Respect the rate-limit backoff window — don't retry while banned
+  const now = Date.now();
+  if (now < _rateLimitedUntil) {
+    const secs = Math.ceil((_rateLimitedUntil - now) / 1000);
+    console.warn(`[instagram-proxy] web_profile_info: rate-limited — skipping for ${secs}s more`);
+    return null;
+  }
+
   try {
     const url = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`;
     const res = await httpsGet(url, {
@@ -154,7 +178,23 @@ async function tryWebProfileInfo(username, cookieJar, csrfToken) {
     if (res.statusCode === 404) {
       return { username, followerCount: null, status: 'not_found', message: 'Instagram account not found.', dataSource: 'none' };
     }
-    if (res.statusCode !== 200) return null;
+    if (res.statusCode === 429) {
+      // Rate limited — back off for BACKOFF_MS and force a fresh session next time
+      _rateLimitedUntil = Date.now() + BACKOFF_MS;
+      _session = null;
+      console.warn(`[instagram-proxy] web_profile_info: 429 rate-limited — backing off for ${BACKOFF_MS / 60000} min`);
+      return null;
+    }
+    if (res.statusCode === 401) {
+      // Session expired or invalid — force re-bootstrap on next request
+      _session = null;
+      console.warn('[instagram-proxy] web_profile_info: 401 — session invalidated, will re-bootstrap');
+      return null;
+    }
+    if (res.statusCode !== 200) {
+      console.warn(`[instagram-proxy] web_profile_info: HTTP ${res.statusCode} — body: ${res.body.slice(0, 200)}`);
+      return null;
+    }
 
     let json;
     try { json = JSON.parse(res.body); } catch { return null; }
@@ -181,26 +221,86 @@ async function tryWebProfileInfo(username, cookieJar, csrfToken) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Strategy 2 — oembed (existence check only, no follower count)
+// Strategy 2 — Profile HTML scraping (JSON-LD + og:description)
+// Instagram embeds follower counts in page meta for social sharing previews.
+// This works without authenticated session cookies.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function tryOembed(username) {
+async function tryProfileHtmlScrape(username, cookieJar) {
+  // NOTE: intentionally NOT gated by _rateLimitedUntil — the API 429 ban does
+  // not apply to regular profile page requests (different endpoint, different limits).
   try {
-    const profileUrl = `https://www.instagram.com/${encodeURIComponent(username)}/`;
-    const res = await httpsGet(
-      `https://api.instagram.com/oembed/?url=${encodeURIComponent(profileUrl)}`,
-      { ...BASE_HEADERS, 'Accept': 'application/json' }
-    );
-    console.log(`[instagram-proxy] oembed → HTTP ${res.statusCode}`);
-    if (res.statusCode === 404) {
-      return { username, followerCount: null, status: 'not_found', message: 'Instagram account not found.', dataSource: 'none' };
+    const url = `https://www.instagram.com/${encodeURIComponent(username)}/`;
+    const res = await httpsGet(url, {
+      ...BASE_HEADERS,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+    }, cookieJar);
+
+    console.log(`[instagram-proxy] profile-html → HTTP ${res.statusCode}`);
+    if (res.statusCode !== 200) return null;
+
+    const body = res.body;
+
+    // Strategy A: JSON-LD structured data — most precise (exact integer)
+    const ldRe = /<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
+    let m;
+    while ((m = ldRe.exec(body)) !== null) {
+      try {
+        const ld = JSON.parse(m[1]);
+        const entries = Array.isArray(ld) ? ld : [ld];
+        for (const entry of entries) {
+          const stats = entry?.interactionStatistic || entry?.mainEntity?.interactionStatistic;
+          if (!stats) continue;
+          for (const stat of (Array.isArray(stats) ? stats : [stats])) {
+            const itype = (typeof stat?.interactionType === 'string'
+              ? stat.interactionType
+              : stat?.interactionType?.['@type'] || '').toLowerCase();
+            if (itype.includes('follow') && stat.userInteractionCount != null) {
+              const count = Math.round(Number(stat.userInteractionCount));
+              if (!isNaN(count) && count >= 0) {
+                console.log(`[instagram-proxy] profile-html: JSON-LD → ${count} followers`);
+                return { username, followerCount: count, status: 'found', message: null, dataSource: 'profile_html' };
+              }
+            }
+          }
+        }
+      } catch (_) {}
     }
-    if (res.statusCode === 200) {
-      return { username, followerCount: null, status: 'unavailable', message: 'Account exists but follower count is unavailable. Try again later.', dataSource: 'oembed' };
+
+    // Strategy B: og:description — "5.8M Followers, 1K Following, 1,200 Posts"
+    const ogMatch =
+      body.match(/property="og:description"\s+content="([^"]+)"/i) ||
+      body.match(/content="([^"]+)"\s+property="og:description"/i);
+    if (ogMatch) {
+      const fm = ogMatch[1].match(/((?:[\d,]+)(?:\.\d+)?)\s*([KkMmBb]?)\s*Follower/i);
+      if (fm) {
+        let n = parseFloat(fm[1].replace(/,/g, ''));
+        const u = fm[2].toUpperCase();
+        if (u === 'K') n = Math.round(n * 1_000);
+        else if (u === 'M') n = Math.round(n * 1_000_000);
+        else if (u === 'B') n = Math.round(n * 1_000_000_000);
+        else n = Math.round(n);
+        console.log(`[instagram-proxy] profile-html: og:description → ${n} followers`);
+        return { username, followerCount: n, status: 'found', message: null, dataSource: 'profile_html' };
+      }
+      // og:description exists but no follower count pattern — account exists
+      console.log(`[instagram-proxy] profile-html: og:description found but no follower count: ${ogMatch[1].slice(0, 100)}`);
+    } else {
+      console.warn('[instagram-proxy] profile-html: no og:description found — body snippet:', body.slice(0, 300));
     }
+
+    // Detect not-found vs login-required
+    if (body.includes('page_not_found') || body.includes('PageNotFound')) {
+      return { username, followerCount: null, status: 'not_found', message: 'Instagram account not found.', dataSource: 'profile_html' };
+    }
+
     return null;
   } catch (e) {
-    console.warn('[instagram-proxy] oembed exception:', e.message);
+    console.warn('[instagram-proxy] profile-html exception:', e.message);
     return null;
   }
 }
@@ -226,10 +326,10 @@ module.exports = function (app) {
 
       console.log(`[instagram-proxy] lookup @${username}`);
 
-      const { cookieJar, csrfToken } = await bootstrapSession(username);
+      const { cookieJar, csrfToken } = await getSession(username);
 
       let result = await tryWebProfileInfo(username, cookieJar, csrfToken);
-      if (!result) result = await tryOembed(username);
+      if (!result) result = await tryProfileHtmlScrape(username, cookieJar);
       if (!result) {
         result = {
           username,
