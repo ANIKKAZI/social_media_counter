@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { InstagramIcon } from './shared';
+import { fetchInstagramFollowers } from '../services/instagramService';
 
 /* ─── Platform configuration ───────────────────────────────────────────────
  *
@@ -41,7 +42,7 @@ const PLATFORMS = [
     glow: 'rgba(225,48,108,0.28)',
     apiSupport: false,
     apiKeyLabel: null,
-    apiKeyHint: 'Instagram\'s API requires OAuth and a business account. This runs in demo mode.',
+    apiKeyHint: 'Enter a public Instagram handle to fetch live follower counts.',
     icon: (size, col) => <InstagramIcon size={size} color={col} />,
   },
   {
@@ -143,6 +144,23 @@ export default function SetupPage({ onConnect, initialPlatformIndex = 0 }) {
         }
         const { followers, channelTitle } = await fetchYouTubeSubscribers(cleanHandle, apiKey.trim());
         onConnect({ platform: platform.id, handle: cleanHandle, displayName: channelTitle, followers, isLive: true, apiKey: apiKey.trim() });
+      } else if (platform.id === 'instagram') {
+        const result = await fetchInstagramFollowers(cleanHandle);
+        if (result.status === 'found' || result.status === 'success') {
+          onConnect({ platform: platform.id, handle: cleanHandle, displayName: cleanHandle, followers: result.followerCount, isLive: true });
+        } else if (result.status === 'private') {
+          setError('This account is private. Follower count is not available.');
+          setLoading(false);
+          return;
+        } else if (result.status === 'not_found') {
+          setError('Instagram account not found. Check the handle and try again.');
+          setLoading(false);
+          return;
+        } else {
+          setError(result.message || 'Could not retrieve follower count. Try again later.');
+          setLoading(false);
+          return;
+        }
       } else {
         // Demo mode for unsupported platforms
         onConnect({ platform: platform.id, handle: cleanHandle, displayName: cleanHandle, followers: null, isLive: false });
@@ -416,7 +434,7 @@ export default function SetupPage({ onConnect, initialPlatformIndex = 0 }) {
         </button>
 
         {/* Demo mode notice for non-API platforms */}
-        {!platform.apiSupport && (
+        {!platform.apiSupport && platform.id !== 'instagram' && (
           <p style={{ fontSize: '12px', color: '#2e2e3e', textAlign: 'center', marginTop: '16px', lineHeight: 1.5 }}>
             Will run with simulated data — swap for a real backend when ready.
           </p>

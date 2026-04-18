@@ -14,7 +14,6 @@ export const InstagramIcon = ({ size = 48, color = '#E1306C', style = {} }) => (
 );
 
 export const formatCount = (num) => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return num.toLocaleString();
-  return num.toString();
+  if (num == null || isNaN(num)) return '—';
+  return Math.floor(num).toLocaleString('en-US');
 };

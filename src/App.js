@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import DisplayManager from './components/DisplayManager';
 import SetupPage from './components/SetupPage';
+import config from './config';
+import { fetchInstagramFollowers } from './services/instagramService';
 import './App.css';
 
 const DEMO_INITIAL = 12847;
 const DEMO_GROWTH_INITIAL = 42;
-const LIVE_FETCH_INTERVAL_MS = 60_000;
-const DEMO_TICK_INTERVAL_MS = 5_000;
 
 async function fetchYouTubeSubscribers(handle, apiKey) {
   const cleanHandle = handle.replace(/^@/, '');
@@ -208,24 +208,39 @@ function App() {
     requestKioskFullscreen();
   }, []);
 
-  // Live refresh (YouTube) or demo tick
+  // Live refresh (YouTube / Instagram) or demo tick
   useEffect(() => {
     if (!session) return;
 
     if (session.isLive) {
+      // Pick the right interval from config
+      const interval = session.platform === 'instagram'
+        ? config.INSTAGRAM_POLL_INTERVAL_MS
+        : config.YOUTUBE_POLL_INTERVAL_MS;
+
       // Periodically re-fetch the real count
       const id = setInterval(async () => {
         try {
-          const fresh = await fetchYouTubeSubscribers(session.handle, session.apiKey);
-          setFollowers(prev => {
-            const diff = fresh - prev;
-            if (diff > 0) setTodayGrowth(g => g + diff);
-            return fresh;
-          });
+          let fresh;
+          if (session.platform === 'instagram') {
+            const result = await fetchInstagramFollowers(session.handle);
+            if (result.status === 'found' || result.status === 'success') {
+              fresh = result.followerCount;
+            }
+          } else {
+            fresh = await fetchYouTubeSubscribers(session.handle, session.apiKey);
+          }
+          if (fresh != null) {
+            setFollowers(prev => {
+              const diff = fresh - prev;
+              if (diff > 0) setTodayGrowth(g => g + diff);
+              return fresh;
+            });
+          }
         } catch (_) {
           // Silently ignore transient errors; keep current count
         }
-      }, LIVE_FETCH_INTERVAL_MS);
+      }, interval);
       return () => clearInterval(id);
     } else {
       // Demo mode: simulate small ticks
@@ -233,7 +248,7 @@ function App() {
         const inc = Math.floor(Math.random() * 3) + 1;
         setFollowers(p => p + inc);
         setTodayGrowth(p => p + inc);
-      }, DEMO_TICK_INTERVAL_MS);
+      }, config.DEMO_TICK_INTERVAL_MS);
       return () => clearInterval(id);
     }
   }, [session]);
