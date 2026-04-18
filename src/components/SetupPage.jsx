@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { InstagramIcon } from './shared';
-import { fetchInstagramFollowers } from '../services/instagramService';
 
 /* ─── Platform configuration ───────────────────────────────────────────────
  *
@@ -102,6 +102,7 @@ async function fetchYouTubeSubscribers(handle, apiKey) {
 
 /* ─── Component ─────────────────────────────────────────────────────────── */
 export default function SetupPage({ onConnect, initialPlatformIndex = 0 }) {
+  const navigate = useNavigate();
   const [platformIndex, setPlatformIndex] = useState(initialPlatformIndex);
   const [handle, setHandle] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -142,25 +143,15 @@ export default function SetupPage({ onConnect, initialPlatformIndex = 0 }) {
           setLoading(false);
           return;
         }
-        const { followers, channelTitle } = await fetchYouTubeSubscribers(cleanHandle, apiKey.trim());
-        onConnect({ platform: platform.id, handle: cleanHandle, displayName: channelTitle, followers, isLive: true, apiKey: apiKey.trim() });
+        const { channelTitle } = await fetchYouTubeSubscribers(cleanHandle, apiKey.trim());
+        localStorage.setItem('yt_api_key', apiKey.trim());
+        localStorage.setItem('yt_channel_title', channelTitle || cleanHandle);
+        navigate(`/youtube/${encodeURIComponent(cleanHandle)}`);
+        return;
       } else if (platform.id === 'instagram') {
-        const result = await fetchInstagramFollowers(cleanHandle);
-        if (result.status === 'found' || result.status === 'success') {
-          onConnect({ platform: platform.id, handle: cleanHandle, displayName: cleanHandle, followers: result.followerCount, isLive: true });
-        } else if (result.status === 'private') {
-          setError('This account is private. Follower count is not available.');
-          setLoading(false);
-          return;
-        } else if (result.status === 'not_found') {
-          setError('Instagram account not found. Check the handle and try again.');
-          setLoading(false);
-          return;
-        } else {
-          setError(result.message || 'Could not retrieve follower count. Try again later.');
-          setLoading(false);
-          return;
-        }
+        // Navigate immediately — InstagramPage handles fetching, polling and errors
+        navigate(`/instagram/${encodeURIComponent(cleanHandle)}`);
+        return;
       } else {
         // Demo mode for unsupported platforms
         onConnect({ platform: platform.id, handle: cleanHandle, displayName: cleanHandle, followers: null, isLive: false });
