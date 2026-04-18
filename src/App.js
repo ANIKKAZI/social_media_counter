@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import DisplayManager from './components/DisplayManager';
 import SetupPage from './components/SetupPage';
 import config from './config';
@@ -253,8 +254,6 @@ function App() {
     }
   }, [session]);
 
-  // Always render the real app underneath; splash is a CSS overlay on top.
-  // This avoids DOM tree swaps that cause browsers to exit fullscreen.
   return (
     <>
       {!session ? (
@@ -271,5 +270,206 @@ function App() {
   );
 }
 
-export default App;
+// ── Instagram display page — loaded directly via /instagram/:username ─────
+function InstagramPage() {
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const [followers, setFollowers] = useState(null);
+  const [todayGrowth, setTodayGrowth] = useState(0);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [kioskReady, setKioskReady] = useState(false);
+
+  // Kick off initial fetch then poll
+  useEffect(() => {
+    if (!username) return;
+
+    let isMounted = true;
+
+    const doFetch = async () => {
+      try {
+        const result = await fetchInstagramFollowers(username);
+        if (!isMounted) return;
+        if (result.status === 'found' || result.status === 'success') {
+          setFollowers(prev => {
+            const next = result.followerCount;
+            if (prev != null && next > prev) setTodayGrowth(g => g + (next - prev));
+            return next;
+          });
+          setError('');
+        } else if (result.status === 'not_found') {
+          setError(`@${username} not found.`);
+        } else {
+          // Keep last known count; show soft error only on first load
+          if (followers == null) setError(result.message || 'Could not load follower count.');
+        }
+      } catch (e) {
+        if (isMounted && followers == null) setError('Failed to reach Instagram.');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    doFetch();
+    const id = setInterval(doFetch, config.INSTAGRAM_POLL_INTERVAL_MS);
+    return () => { isMounted = false; clearInterval(id); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
+
+  // Kiosk fullscreen on first interaction
+  const handleTap = useCallback(() => {
+    if (!kioskReady) {
+      requestKioskFullscreen();
+      setKioskReady(true);
+    }
+  }, [kioskReady]);
+
+  if (loading) {
+    return (
+      <div onClick={handleTap} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100dvh', background: '#0a0a0a', color: '#fff', fontSize: 20, fontFamily: 'sans-serif' }}>
+        Loading @{username}…
+      </div>
+    );
+  }
+
+  if (error && followers == null) {
+    return (
+      <div onClick={handleTap} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', gap: 16, height: '100dvh', background: '#0a0a0a',
+        color: '#fff', fontSize: 18, fontFamily: 'sans-serif', padding: 24, textAlign: 'center' }}>
+        <span>{error}</span>
+        <button onClick={() => navigate('/')}
+          style={{ marginTop: 8, padding: '10px 24px', borderRadius: 8, border: 'none',
+            background: 'linear-gradient(135deg,#833AB4,#E1306C)', color: '#fff', fontSize: 16, cursor: 'pointer' }}>
+          ← Back to Setup
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div onClick={handleTap}>
+      <DisplayManager
+        followers={followers ?? 0}
+        todayGrowth={todayGrowth}
+        username={username}
+      />
+    </div>
+  );
+}
+
+// ── YouTube display page — loaded directly via /youtube/:username ─────────
+function YouTubePage() {
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const apiKey = localStorage.getItem('yt_api_key') || '';
+  const channelTitle = localStorage.getItem('yt_channel_title') || username;
+  const [subscribers, setSubscribers] = useState(null);
+  const [todayGrowth, setTodayGrowth] = useState(0);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [kioskReady, setKioskReady] = useState(false);
+
+  useEffect(() => {
+    if (!username || !apiKey) {
+      setLoading(false);
+      return;
+    }
+    let isMounted = true;
+
+    const doFetch = async () => {
+      try {
+        const count = await fetchYouTubeSubscribers(username, apiKey);
+        if (!isMounted) return;
+        setSubscribers(prev => {
+          if (prev != null && count > prev) setTodayGrowth(g => g + (count - prev));
+          return count;
+        });
+        setError('');
+      } catch (e) {
+        if (isMounted) {
+          setSubscribers(prev => {
+            if (prev == null) setError(e.message || 'Failed to fetch subscriber count.');
+            return prev;
+          });
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    doFetch();
+    const id = setInterval(doFetch, config.YOUTUBE_POLL_INTERVAL_MS);
+    return () => { isMounted = false; clearInterval(id); };
+  }, [username, apiKey]);
+
+  const handleTap = useCallback(() => {
+    if (!kioskReady) { requestKioskFullscreen(); setKioskReady(true); }
+  }, [kioskReady]);
+
+  if (!apiKey) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        gap: 16, height: '100dvh', background: '#0a0a0a', color: '#fff', fontSize: 18,
+        fontFamily: 'sans-serif', padding: 24, textAlign: 'center' }}>
+        <span>No YouTube API key found. Please connect your YouTube account first.</span>
+        <button onClick={() => navigate('/')}
+          style={{ marginTop: 8, padding: '10px 24px', borderRadius: 8, border: 'none',
+            background: 'linear-gradient(135deg,#FF0000,#b30000)', color: '#fff', fontSize: 16, cursor: 'pointer' }}>
+          ← Back to Setup
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div onClick={handleTap} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100dvh', background: '#0a0a0a', color: '#fff', fontSize: 20, fontFamily: 'sans-serif' }}>
+        Loading @{username}…
+      </div>
+    );
+  }
+
+  if (error && subscribers == null) {
+    return (
+      <div onClick={handleTap} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', gap: 16, height: '100dvh', background: '#0a0a0a',
+        color: '#fff', fontSize: 18, fontFamily: 'sans-serif', padding: 24, textAlign: 'center' }}>
+        <span>{error}</span>
+        <button onClick={() => navigate('/')}
+          style={{ marginTop: 8, padding: '10px 24px', borderRadius: 8, border: 'none',
+            background: 'linear-gradient(135deg,#FF0000,#b30000)', color: '#fff', fontSize: 16, cursor: 'pointer' }}>
+          ← Back to Setup
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div onClick={handleTap}>
+      <DisplayManager
+        followers={subscribers ?? 0}
+        todayGrowth={todayGrowth}
+        username={channelTitle}
+      />
+    </div>
+  );
+}
+
+// ── Root with router ──────────────────────────────────────────────────────
+function Root() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/instagram/:username" element={<InstagramPage />} />
+        <Route path="/youtube/:username" element={<YouTubePage />} />
+        <Route path="*" element={<App />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default Root;
 
