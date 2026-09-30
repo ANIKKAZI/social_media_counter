@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { InstagramIcon } from './shared';
 
-const META_ACCESS_TOKEN = process.env.REACT_APP_META_ACCESS_TOKEN;
-
 async function fetchInstagramProfile() {
-  const url = `https://graph.instagram.com/v25.0/me?fields=id,username,followers_count&access_token=${encodeURIComponent(META_ACCESS_TOKEN)}`;
-  const res = await fetch(url);
+  const res = await fetch('/api/followers');
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
-  return { username: data.username, followers: Number(data.followers_count) || 0 };
+  return { username: data.username, followers: Number(data.followers) || 0 };
 }
 
 export default function SetupPage({ onConnect }) {
@@ -18,7 +15,6 @@ export default function SetupPage({ onConnect }) {
   useEffect(() => {
     let cancelled = false;
     const connect = async () => {
-      if (!META_ACCESS_TOKEN) { setError('Meta access token is missing. Add it to the .env file and restart the app.'); setLoading(false); return; }
       try {
         const profile = await fetchInstagramProfile();
         if (!cancelled) onConnect({ platform: 'instagram', displayName: profile.username, handle: profile.username, followers: profile.followers, isLive: true });

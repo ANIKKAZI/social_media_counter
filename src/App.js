@@ -3,17 +3,7 @@ import DisplayManager from './components/DisplayManager';
 import SetupPage from './components/SetupPage';
 import './App.css';
 
-const LIVE_FETCH_INTERVAL_MS = 50_000;
-const META_ACCESS_TOKEN = process.env.REACT_APP_META_ACCESS_TOKEN;
-
-async function fetchInstagramProfile() {
-  if (!META_ACCESS_TOKEN) throw new Error('Meta access token is not configured.');
-  const url = `https://graph.instagram.com/v25.0/me?fields=id,username,followers_count&access_token=${encodeURIComponent(META_ACCESS_TOKEN)}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
-  return { username: data.username, followers: Number(data.followers_count) || 0 };
-}
+const DEFAULT_FALLBACK_FETCH_INTERVAL_MS = 1_000;
 
 function requestKioskFullscreen() {
   const el = document.documentElement;
@@ -35,14 +25,27 @@ function App() {
   const [session, setSession] = useState(null);
   const [followers, setFollowers] = useState(0);
   const [todayGrowth, setTodayGrowth] = useState(0);
+  const hasSession = Boolean(session);
   const handleStart = useCallback(() => { requestKioskFullscreen(); setTimeout(() => setKioskReady(true), 200); }, []);
   const handleConnect = useCallback((info) => { setSession(info); setFollowers(info.followers); setTodayGrowth(0); requestKioskFullscreen(); }, []);
   useEffect(() => {
-    if (!session) return undefined;
-    const refresh = async () => { try { const fresh = await fetchInstagramProfile(); setSession(prev => ({ ...prev, displayName: fresh.username })); setFollowers(prev => { const diff = fresh.followers - prev; if (diff > 0) setTodayGrowth(g => g + diff); return fresh.followers; }); } catch (_) { /* Preserve last successful value. */ } };
-    const id = setInterval(refresh, LIVE_FETCH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [session]);
+    if (!hasSession) return undefined;
+    let fallbackId;
+    let fallbackInterval = DEFAULT_FALLBACK_FETCH_INTERVAL_MS;
+    const applyProfile = (fresh) => {
+      setSession(prev => ({ ...prev, displayName: fresh.username }));
+      setFollowers(prev => { const diff = fresh.followers - prev; if (diff > 0) setTodayGrowth(g => g + diff); return fresh.followers; });
+    };
+    const stream = new EventSource('/api/events');
+    stream.onopen = () => { if (fallbackId) { clearInterval(fallbackId); fallbackId = undefined; } };
+    stream.onmessage = (event) => { try { applyProfile(JSON.parse(event.data)); } catch (_) { /* Ignore malformed events. */ } };
+    const startFallback = () => {
+      if (!fallbackId) fallbackId = setInterval(async () => { try { const res = await fetch('/api/followers', { cache: 'no-store' }); if (res.ok) applyProfile(await res.json()); } catch (_) { /* Backend may still be starting. */ } }, fallbackInterval);
+    };
+    fetch('/api/config', { cache: 'no-store' }).then(res => res.ok ? res.json() : null).then(config => { if (config?.fallbackPollIntervalMs) fallbackInterval = config.fallbackPollIntervalMs; }).catch(() => {});
+    stream.onerror = startFallback;
+    return () => { stream.close(); if (fallbackId) clearInterval(fallbackId); };
+  }, [hasSession]);
   return <><>{!session ? <SetupPage onConnect={handleConnect} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} />}</><KioskSplash visible={!kioskReady} onStart={handleStart} /></>;
 }
 
