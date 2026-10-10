@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { InstagramIcon } from './shared';
+import { InstagramIcon, GoogleIcon } from './shared';
 
 async function fetchInstagramProfile() {
   const res = await fetch('/api/followers');
@@ -9,10 +9,12 @@ async function fetchInstagramProfile() {
 }
 
 export default function SetupPage({ onConnect }) {
+  const [platform, setPlatform] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (platform !== 'instagram') return undefined;
     let cancelled = false;
     const connect = async () => {
       try {
@@ -24,14 +26,14 @@ export default function SetupPage({ onConnect }) {
     };
     connect();
     return () => { cancelled = true; };
-  }, [onConnect]);
+  }, [onConnect, platform]);
 
-  return <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #08080f, #10101c 55%, #0b0b14)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Helvetica Neue', Arial, sans-serif", color: '#fff', position: 'fixed', inset: 0 }}>
-    <div style={{ width: 420, maxWidth: '88vw', textAlign: 'center', background: 'rgba(255,255,255,0.028)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: '42px 36px', boxShadow: '0 40px 100px rgba(0,0,0,0.55)' }}>
-      <div style={{ width: 76, height: 76, borderRadius: 22, background: 'linear-gradient(135deg, #833AB4, #E1306C, #F77737)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 26px', boxShadow: '0 12px 36px rgba(225,48,108,0.35)' }}><InstagramIcon size={38} color="#fff" /></div>
+  if (!platform) return <div className="setup-page"><div className="setup-shell"><div className="setup-eyebrow">Social display</div><h1>Choose your audience action</h1><p className="setup-copy">Set up the live counter or invite guests to leave a Google Business review.</p><div className="platform-grid"><button className="platform-option instagram-option" onClick={() => setPlatform('instagram')}><span className="platform-icon instagram-icon"><InstagramIcon size={42} color="#fff" /></span><strong>Instagram</strong><small>Live follower counter</small></button><button className="platform-option google-option" onClick={() => onConnect({ platform: 'google', displayName: 'Google Business', handle: 'reviews', followers: 0, isLive: false })}><span className="platform-icon google-icon"><GoogleIcon size={42} /></span><strong>Google reviews</strong><small>QR code, ratings and review prompts</small></button></div></div></div>;
+
+  return <div className="setup-page"><div className="setup-shell instagram-setup">
+      <div className="instagram-setup-icon"><InstagramIcon size={38} color="#fff" /></div>
       <h1 style={{ fontSize: 26, marginBottom: 10 }}>Instagram Follower Counter</h1>
       <p style={{ fontSize: 14, color: '#777', lineHeight: 1.6 }}>{loading ? 'Connecting to Meta Graph API…' : error}</p>
       {error && <button onClick={() => window.location.reload()} style={{ marginTop: 24, padding: '12px 22px', border: 0, borderRadius: 10, background: 'linear-gradient(135deg, #833AB4, #E1306C)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Retry connection</button>}
-    </div>
-  </div>;
+    </div></div>;
 }

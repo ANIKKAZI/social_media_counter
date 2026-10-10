@@ -31,6 +31,25 @@ async function fetchFollowers() {
   return { id: data.id, username: data.username, followers: Number(data.followers_count) || 0, updatedAt: new Date().toISOString() };
 }
 
+const googleApiKey = env.GOOGLE_PLACES_API_KEY;
+const googlePlaceId = env.GOOGLE_PLACE_ID;
+const GOOGLE_CACHE_MS = Number(env.GOOGLE_POLL_INTERVAL_MS || 15_000);
+let googleCache = null;
+
+async function fetchGoogleReviews() {
+  if (!googleApiKey || !googlePlaceId) throw new Error('GOOGLE_PLACES_API_KEY and GOOGLE_PLACE_ID must be set in the root .env file.');
+  if (googleCache && Date.now() - googleCache.fetchedAt < GOOGLE_CACHE_MS) return googleCache.data;
+  const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(googlePlaceId)}`, {
+    headers: { 'X-Goog-Api-Key': googleApiKey, 'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount' },
+  });
+  const body = await response.json();
+  if (!response.ok || body.error) throw new Error(body.error?.message || `Google Places HTTP ${response.status}`);
+  const data = { placeId: body.id || googlePlaceId, name: body.displayName?.text || '', rating: Number(body.rating) || 0, reviewCount: Number(body.userRatingCount) || 0, updatedAt: new Date().toISOString() };
+  googleCache = { data, fetchedAt: Date.now() };
+  console.log(`[Google] ${data.name}: ${data.rating} stars, ${data.reviewCount} reviews`);
+  return data;
+}
+
 function broadcast(profile) {
   const message = `data: ${JSON.stringify(profile)}\n\n`;
   for (const client of clients) client.write(message);
@@ -46,8 +65,12 @@ function sendJson(response, status, body) {
   response.end(JSON.stringify(body));
 }
 
-const server = http.createServer((request, response) => {
+const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
+  if (url.pathname === '/api/google-reviews') {
+    try { return sendJson(response, 200, await fetchGoogleReviews()); }
+    catch (error) { console.error(`[Google] ${error.message}`); return sendJson(response, 503, { error: error.message }); }
+  }
   if (url.pathname === '/api/health') return sendJson(response, 200, { ok: true, metaConfigured: Boolean(accessToken) });
   if (url.pathname === '/api/config') return sendJson(response, 200, { fallbackPollIntervalMs: FRONTEND_FALLBACK_POLL_INTERVAL_MS });
   if (url.pathname === '/api/followers') return latest ? sendJson(response, 200, latest) : sendJson(response, 503, { error: lastError?.message || 'Follower data is not ready.' });

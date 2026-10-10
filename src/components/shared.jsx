@@ -13,6 +13,15 @@ export const InstagramIcon = ({ size = 48, color = '#E1306C', style = {} }) => (
   </svg>
 );
 
+export const GoogleIcon = ({ size = 48, style = {} }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width={size} height={size} style={style} aria-hidden="true">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.35 1.53 8.27 2.82l6.05-5.91C34.64 3.64 29.72 1.5 24 1.5 14.73 1.5 6.74 6.83 2.87 14.62l7.1 5.51C11.9 14.04 17.4 9.5 24 9.5z" />
+    <path fill="#4285F4" d="M46.5 24.5c0-1.59-.14-2.76-.45-3.98H24v8.07h12.94c-.26 2.01-1.93 5.04-5.55 7.07l6.78 5.25C42.23 36.56 46.5 31.01 46.5 24.5z" />
+    <path fill="#FBBC05" d="M9.97 28.87A14.62 14.62 0 0 1 9.2 24c0-1.69.28-3.33.74-4.87l-7.1-5.51A23.75 23.75 0 0 0 1.5 24c0 3.73.9 7.25 2.48 10.38l5.99-5.51z" />
+    <path fill="#34A853" d="M24 46.5c6.48 0 11.92-2.13 15.9-5.79l-6.78-5.25c-1.81 1.27-4.25 2.16-9.12 2.16-6.6 0-12.1-4.54-14.03-10.63l-7.1 5.51C6.74 41.17 14.73 46.5 24 46.5z" />
+  </svg>
+);
+
 export const formatCount = (num) => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
   if (num >= 1000) return num.toLocaleString();
