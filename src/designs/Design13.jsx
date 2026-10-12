@@ -89,19 +89,20 @@ const CSS = `
   }
 `;
 
-/* ── Main component ──────────────────────────────────────────────────── */
-export default function Design13({ followers, todayGrowth, username }) {
+/* ── Main component ──────────────────────────────────────── */
+export default function Design13({ followers, todayGrowth = 0, username, platform = 'instagram', rating, platformLabel }) {
   const animated = useAnimatedCount(followers);
+  const isGoogle = platform === 'google';
 
   /* Format with thousands commas */
   const countText = Math.floor(animated).toLocaleString();
-  const growthText = `+${todayGrowth.toLocaleString()}`;
+  const growthText = isGoogle ? (rating ? '★'.repeat(Math.floor(rating)) : '★★★★★') : `+${(todayGrowth || 0).toLocaleString()}`;
 
   /* LED pixel size — big enough to read clearly across a room */
   const PX  = 18;
   const GAP = 5;
 
-  const COLOR = '#FF6B00';
+  const COLOR = isGoogle ? '#FF8A00' : '#FF6B00';
 
   const scanlineBg = 'repeating-linear-gradient(0deg, transparent, transparent 14px, rgba(255,255,255,0.013) 14px, rgba(255,255,255,0.013) 15px)';
 
@@ -157,14 +158,14 @@ export default function Design13({ followers, todayGrowth, username }) {
           <span style={{
             fontSize: '12px', fontWeight: 700,
             color: `${COLOR}cc`, letterSpacing: '4px', textTransform: 'uppercase',
-          }}>Followers Counter</span>
+          }}>{isGoogle ? 'Reviews Counter' : 'Followers Counter'}</span>
         </div>
 
-        {/* Handle */}
+        {/* Handle or name */}
         <span style={{
           fontSize: '14px', fontWeight: 400, color: '#aaaaaa',
           letterSpacing: '2px',
-        }}>@{username}</span>
+        }}>{isGoogle ? username : `@${username}`}</span>
 
         {/* Live pill */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -214,7 +215,7 @@ export default function Design13({ followers, todayGrowth, username }) {
             <span style={{
               fontSize: '9px', fontWeight: 700,
               color: '#888888', letterSpacing: '4px', textTransform: 'uppercase',
-            }}>Followers</span>
+            }}>{isGoogle ? 'Reviews' : 'Followers'}</span>
             <div style={{ display: 'flex', gap: '5px' }}>
               {[COLOR, '#1a1a1a', '#1a1a1a'].map((c, i) => (
                 <div key={i} style={{
@@ -250,14 +251,14 @@ export default function Design13({ followers, todayGrowth, username }) {
           </div>
         </div>
 
-        {/* Today's growth — smaller matrix below */}
+        {/* Today's growth or rating — smaller matrix below */}
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
         }}>
           <span style={{
             fontSize: '10px', fontWeight: 700,
             color: `${COLOR}cc`, letterSpacing: '5px', textTransform: 'uppercase',
-          }}>Today's Growth</span>
+          }}>{isGoogle ? 'Rating' : "Today's Growth"}</span>
           <LEDMatrix text={growthText} px={Math.round(PX * 0.55)} gap={Math.round(GAP * 0.6)} color={COLOR} />
         </div>
       </div>
@@ -285,7 +286,7 @@ export default function Design13({ followers, todayGrowth, username }) {
             boxShadow: `0 6px 28px ${COLOR}30, 0 2px 8px rgba(0,0,0,0.5)`,
           }}>
             <QRCodeSVG
-              value={`https://instagram.com/${username}`}
+              value={isGoogle ? (process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://google.com') : `https://instagram.com/${username}`}
               size={90}
               fgColor="#111"
               bgColor="#fff"
@@ -295,7 +296,7 @@ export default function Design13({ followers, todayGrowth, username }) {
           <span style={{
             fontSize: '9px', fontWeight: 700,
             color: '#aaaaaa', letterSpacing: '3px', textTransform: 'uppercase',
-          }}>Scan to Follow</span>
+          }}>{isGoogle ? 'Scan to Review' : 'Scan to Follow'}</span>
         </div>
 
         {/* Branding */}
@@ -304,9 +305,10 @@ export default function Design13({ followers, todayGrowth, username }) {
           <span style={{
             fontSize: '22px', fontWeight: 800,
             color: `${COLOR}cc`, letterSpacing: '1px',
-          }}>LED Counter</span>
+          }}>{isGoogle ? 'Review Counter' : 'LED Counter'}</span>
         </div>
       </div>
     </div>
   );
 }
+

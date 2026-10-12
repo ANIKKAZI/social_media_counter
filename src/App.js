@@ -51,7 +51,7 @@ function App() {
     stream.onerror = startFallback;
     return () => { stream.close(); if (fallbackId) clearInterval(fallbackId); };
   }, [hasSession]);
-  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
+  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} onBack={() => setSession(null)} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
 }
 
 export default App;

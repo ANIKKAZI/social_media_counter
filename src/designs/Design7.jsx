@@ -2,7 +2,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAnimatedCount } from '../hooks/useAnimatedCount';
-import { InstagramIcon } from '../components/shared';
+import { InstagramIcon, GoogleIcon } from '../components/shared';
 
 function FlipDigit({ digit }) {
   return (
@@ -150,31 +150,57 @@ const styles = {
   },
 };
 
-export default function Design7({ followers, todayGrowth, username }) {
+export default function Design7({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel }) {
   const animatedCount = useAnimatedCount(followers);
+  const isGoogle = platform === 'google';
 
   return (
     <div style={styles.container}>
       <div style={styles.inner}>
         <div style={styles.header}>
-          <InstagramIcon size={36} color="#e94560" />
-          <span style={styles.username}>@{username}</span>
+          {isGoogle ? (
+            <GoogleIcon size={36} color="#e94560" />
+          ) : (
+            <InstagramIcon size={36} color="#e94560" />
+          )}
+          <span style={styles.username}>{isGoogle ? username : `@${username}`}</span>
         </div>
-        <div style={styles.subtitle}>Follow Us on Instagram</div>
+        <div style={styles.subtitle}>
+          {platformLabel || (isGoogle ? 'Google Reviews' : 'Follow Us on Instagram')}
+        </div>
         <FlipCounter value={animatedCount} />
-        <div style={styles.followersLabel}>Followers</div>
-        <div style={styles.growth}>+{todayGrowth} TODAY</div>
+        <div style={styles.followersLabel}>
+          {isGoogle ? (
+            <>
+              <div style={{ fontSize: '12px', marginBottom: '4px' }}>
+                ★★★★★ {rating ? `${rating.toFixed(1)} stars` : 'Rating'}
+              </div>
+              Reviews
+            </>
+          ) : (
+            'Followers'
+          )}
+        </div>
+        {!isGoogle && todayGrowth > 0 && (
+          <div style={styles.growth}>+{todayGrowth} TODAY</div>
+        )}
         <div style={styles.bottom}>
           <div style={styles.qrWrap}>
             <QRCodeSVG
-              value={`https://instagram.com/${username}`}
+              value={
+                isGoogle
+                  ? process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review'
+                  : `https://instagram.com/${username}`
+              }
               size={130}
               fgColor="#1a1a2e"
               bgColor="#fff"
               level="M"
             />
           </div>
-          <div style={styles.cta}>Scan to Follow</div>
+          <div style={styles.cta}>
+            {isGoogle ? 'Scan to Rate' : 'Scan to Follow'}
+          </div>
         </div>
       </div>
     </div>

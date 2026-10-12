@@ -1,24 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Design1, Design2, Design3, Design4, Design5,
-  Design6, Design7, Design8, Design9, Design10, Design11, Design12, Design13,
-} from '../designs';
+import { getAllDesigns } from '../designs';
 
-const designs = [
-  { Component: Design1, name: 'Minimal Clean' },
-  { Component: Design2, name: 'Dark Mode Neon' },
-  { Component: Design3, name: 'Instagram Gradient' },
-  { Component: Design4, name: 'Cafe Theme' },
-  { Component: Design5, name: 'Luxury Black & Gold' },
-  { Component: Design6, name: 'Playful Confetti' },
-  { Component: Design7, name: 'Retro Flip Counter' },
-  { Component: Design8, name: 'Glassmorphism' },
-  { Component: Design9, name: 'Bold Typography' },
-  { Component: Design10, name: 'Cafe Background' },
-  { Component: Design11, name: 'Kiosk Dashboard' },
-  { Component: Design12, name: 'Instagram Flip' },
-  { Component: Design13, name: 'LaMetric LED' },
-];
+const designs = getAllDesigns();
 
 const panelStyles = {
   panel: {
@@ -111,7 +94,7 @@ const panelStyles = {
   },
 };
 
-export default function DisplayManager({ followers, todayGrowth, username }) {
+export default function DisplayManager({ followers, todayGrowth, username, onBack }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(false);
   const [rotateInterval, setRotateInterval] = useState(30);
@@ -169,6 +152,7 @@ export default function DisplayManager({ followers, todayGrowth, username }) {
           followers={followers}
           todayGrowth={todayGrowth}
           username={username}
+          platform="instagram"
         />
       </div>
 
@@ -183,6 +167,14 @@ export default function DisplayManager({ followers, todayGrowth, username }) {
 
         {showPanel && (
           <div style={panelStyles.controls}>
+            <button 
+              style={panelStyles.fsBtn} 
+              onClick={onBack}
+              title="Return to platform selection"
+            >
+              ← Back to Platforms
+            </button>
+
             <div style={panelStyles.label}>Designs</div>
             {designs.map((d, i) => (
               <button

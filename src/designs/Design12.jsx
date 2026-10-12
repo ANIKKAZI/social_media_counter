@@ -132,7 +132,7 @@ function Flap({ digit, prevDigit }) {
 }
 
 /* ── Main component ─────────────────────────────────────────────────────── */
-export default function Design12({ followers, todayGrowth, username }) {
+export default function Design12({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel }) {
   const animated = useAnimatedCount(followers);
 
   const strVal = String(Math.max(0, Math.floor(followers))).padStart(6, '0');
@@ -263,19 +263,19 @@ export default function Design12({ followers, todayGrowth, username }) {
         display: 'flex', alignItems: 'center', gap: '64px',
         marginTop: '4px',
       }}>
-        {/* Today's growth */}
+        {/* Today's growth or rating */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
           <span style={{
             fontSize: '10px', fontWeight: 600,
             color: '#b098b8', letterSpacing: '2.5px', textTransform: 'uppercase',
-          }}>Today's Growth</span>
+          }}>{platform === 'google' ? 'Rating' : "Today's Growth"}</span>
           <span style={{
             fontSize: '48px', fontWeight: 800,
             background: IG_BG,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             letterSpacing: '-1px',
-          }}>+{todayGrowth.toLocaleString()}</span>
+          }}>{platform === 'google' ? (rating ? '★'.repeat(Math.floor(rating)) : '★★★★★') : `+${(todayGrowth || 0).toLocaleString()}`}</span>
         </div>
 
         {/* QR code */}
@@ -286,7 +286,7 @@ export default function Design12({ followers, todayGrowth, username }) {
             border: '1px solid rgba(193,53,132,0.1)',
           }}>
             <QRCodeSVG
-              value={`https://instagram.com/${username}`}
+              value={platform === 'google' ? (process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://google.com') : `https://instagram.com/${username}`}
                 size={130}
               fgColor="#2a1a2e"
               bgColor="#ffffff"
@@ -296,7 +296,7 @@ export default function Design12({ followers, todayGrowth, username }) {
           <span style={{
             fontSize: '10px', fontWeight: 700,
             color: '#b098b8', letterSpacing: '3px', textTransform: 'uppercase',
-          }}>Scan to Follow</span>
+          }}>{platform === 'google' ? 'Scan to Review' : 'Scan to Follow'}</span>
         </div>
 
         {/* Live indicator */}
@@ -324,3 +324,4 @@ export default function Design12({ followers, todayGrowth, username }) {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-/* Design 11 – Photo-Realistic Smiirl Kiosk Mockup
+/* Design 11 ï¿½ Photo-Realistic Smiirl Kiosk Mockup
  * Reclaimed-wood cafe counter | thick matte-black kiosk bezels
  * Skeuomorphic mechanical split-flap | 6 flaps, last 3 mid-flip
  * QR Code + Scan to Follow
@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAnimatedCount } from '../hooks/useAnimatedCount';
-import { InstagramIcon, formatCount } from '../components/shared';
+import { InstagramIcon, GoogleIcon, formatCount } from '../components/shared';
 
 /* -- Flap geometry ------------------------------------------------------- */
 const FW = 110;
@@ -33,7 +33,7 @@ const CSS = `
   }
 `;
 
-/* -- Single flap digit — full card, flips only on digit change ----------- */
+/* -- Single flap digit ï¿½ full card, flips only on digit change ----------- */
 function Flap({ digit, prevDigit }) {
   const [phase, setPhase]     = useState(null);
   const [shown, setShown]     = useState(digit);
@@ -95,7 +95,7 @@ function Flap({ digit, prevDigit }) {
 }
 
 /* -- Main component ------------------------------------------------------ */
-export default function Design11({ followers, todayGrowth, username }) {
+export default function Design11({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel }) {
   const animated = useAnimatedCount(followers);
 
   // Use the actual (non-interpolated) follower count for flap digits.
@@ -129,12 +129,12 @@ export default function Design11({ followers, todayGrowth, username }) {
     }}>
       <style>{CSS}</style>
 
-      {/* Edge vignette — simulates camera depth of field */}
+      {/* Edge vignette ï¿½ simulates camera depth of field */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,0.62) 100%)' }} />
       {/* Warm ambient light from above */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '140px', pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(255,165,60,0.08) 0%, transparent 100%)' }} />
 
-      {/* -- Kiosk device — slight camera-perspective tilt --------------- */}
+      {/* -- Kiosk device ï¿½ slight camera-perspective tilt --------------- */}
       <div style={{
         position: 'relative',
         transform: 'perspective(1500px) rotateX(2deg) rotateY(-1.5deg)',
@@ -174,7 +174,7 @@ export default function Design11({ followers, todayGrowth, username }) {
           }}>
             {/* Screen warm top-glow reflection */}
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% -10%, rgba(255,200,90,0.05) 0%, transparent 60%)' }} />
-            {/* Screen glare — angled highlight */}
+            {/* Screen glare ï¿½ angled highlight */}
             <div style={{ position: 'absolute', top: 0, left: '-25%', width: '55%', height: '45%', background: 'linear-gradient(135deg, rgba(255,255,255,0.028) 0%, transparent 65%)', transform: 'skewX(-12deg)', pointerEvents: 'none' }} />
 
             {/* -- Content layout ---------------------------------- */}
@@ -186,8 +186,14 @@ export default function Design11({ followers, todayGrowth, username }) {
 
               {/* Handle row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '18px' }}>
-                <InstagramIcon size={18} color="#aaa" />
-                <span style={{ fontSize: '14px', fontWeight: 300, color: '#aaa', letterSpacing: '4px', textTransform: 'uppercase' }}>@{username}</span>
+                {platform === 'google' ? (
+                  <GoogleIcon size={18} />
+                ) : (
+                  <InstagramIcon size={18} color="#aaa" />
+                )}
+                <span style={{ fontSize: '14px', fontWeight: 300, color: '#aaa', letterSpacing: '4px', textTransform: 'uppercase' }}>
+                  {platform === 'google' ? username : `@${username}`}
+                </span>
               </div>
 
               {/* Counter housing */}
@@ -250,11 +256,11 @@ export default function Design11({ followers, todayGrowth, username }) {
                 background: 'rgba(0,0,0,0.28)',
                 flexShrink: 0,
               }}>
-                {/* Today's growth */}
+                {/* Today's growth or rating */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                  <span style={{ fontSize: '9px', color: '#888', letterSpacing: '2.5px', textTransform: 'uppercase' }}>Today's Growth</span>
-                  <span style={{ fontSize: '26px', fontWeight: 700, color: '#5ea84e', fontFamily: FONT, letterSpacing: '-0.5px' }}>
-                    +{todayGrowth.toLocaleString()}
+                  <span style={{ fontSize: '9px', color: '#888', letterSpacing: '2.5px', textTransform: 'uppercase' }}>{platform === 'google' ? 'Rating' : "Today's Growth"}</span>
+                  <span style={{ fontSize: '26px', fontWeight: 700, color: platform === 'google' ? '#ff8a00' : '#5ea84e', fontFamily: FONT, letterSpacing: '-0.5px' }}>
+                    {platform === 'google' ? (rating ? 'â˜…'.repeat(Math.floor(rating)) : 'â˜…â˜…â˜…â˜…â˜…') : `+${(todayGrowth || 0).toLocaleString()}`}
                   </span>
                 </div>
 
@@ -262,14 +268,14 @@ export default function Design11({ followers, todayGrowth, username }) {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '7px' }}>
                   <div style={{ padding: '9px', background: '#fff', borderRadius: '9px', boxShadow: '0 4px 18px rgba(0,0,0,0.6)' }}>
                     <QRCodeSVG
-                      value={`https://instagram.com/${username}`}
+                      value={platform === 'google' ? (process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://google.com') : `https://instagram.com/${username}`}
                       size={76}
                       fgColor="#111111"
                       bgColor="#ffffff"
                       level="M"
                     />
                   </div>
-                  <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '2px', textTransform: 'uppercase' }}>Scan to Follow</span>
+                  <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '2px', textTransform: 'uppercase' }}>{platform === 'google' ? 'Scan to Review' : 'Scan to Follow'}</span>
                 </div>
 
                 {/* Live + total */}
@@ -299,3 +305,4 @@ export default function Design11({ followers, todayGrowth, username }) {
     </div>
   );
 }
+

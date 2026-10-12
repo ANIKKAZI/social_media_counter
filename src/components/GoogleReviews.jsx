@@ -1,14 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { GoogleIcon } from './shared';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { getAllDesigns } from '../designs';
 
-const themes = [
-  { name: 'Clean', background: '#f7f9fc', foreground: '#17202a', accent: '#1a73e8', card: '#fff' },
-  { name: 'Midnight', background: '#0b1020', foreground: '#fff', accent: '#8ab4f8', card: '#18233a' },
-  { name: 'Warm', background: '#f5efe5', foreground: '#2c2118', accent: '#b05b27', card: '#fffaf2' },
-];
+const designs = getAllDesigns();
 
-const reviewUrl = process.env.REACT_APP_GOOGLE_REVIEW_URL || '';
 const fallbackCount = Number(process.env.REACT_APP_GOOGLE_REVIEW_COUNT || 0);
 const fallbackRating = Number(process.env.REACT_APP_GOOGLE_RATING || 0);
 
@@ -30,30 +24,224 @@ function useGoogleReviews() {
   return data;
 }
 
-function GoogleTheme({ theme, data }) {
-  const reviewCount = data.reviewCount;
-  const rating = Math.min(5, Math.max(0, data.rating));
-  return <div style={{ minHeight: '100%', background: theme.background, color: theme.foreground, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6vw', fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
-    <div style={{ width: 'min(1120px, 100%)', display: 'grid', gridTemplateColumns: '1fr 330px', gap: '8vw', alignItems: 'center' }}>
-      <div><div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}><GoogleIcon size={46} /><span style={{ fontSize: 18, letterSpacing: 2, textTransform: 'uppercase', opacity: .65 }}>{data.name || 'Google Business Reviews'}</span></div><div style={{ fontSize: 'clamp(42px, 7vw, 96px)', fontWeight: 800, lineHeight: .95 }}>{rating.toFixed(1)}<span style={{ fontSize: '.35em', opacity: .55 }}> / 5</span></div><div style={{ color: '#f4b400', fontSize: 'clamp(28px, 4vw, 54px)', letterSpacing: 4, margin: '22px 0' }}>★★★★★</div><div style={{ fontSize: 'clamp(20px, 3vw, 32px)', opacity: .68 }}>{reviewCount.toLocaleString()} reviews</div><div style={{ marginTop: 28, fontSize: 20, opacity: .7 }}>Share your experience with us</div></div>
-      <div style={{ background: theme.card, borderRadius: 18, padding: 26, textAlign: 'center', boxShadow: '0 18px 60px rgba(0,0,0,.14)' }}><QRCodeSVG value={reviewUrl || 'https://g.page/r/google-review'} size={240} includeMargin bgColor="#fff" fgColor="#17202a" /><div style={{ color: theme.foreground, fontSize: 16, fontWeight: 700, marginTop: 18 }}>Scan to rate and review</div><div style={{ color: theme.foreground, opacity: .55, fontSize: 12, marginTop: 6 }}>Your camera will open Google</div></div>
-    </div>
-  </div>;
-}
+const panelStyles = {
+  panel: {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    zIndex: 1000,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+    paddingRight: 'calc(env(safe-area-inset-right, 0px) + 12px)',
+    paddingBottom: '12px',
+    paddingLeft: '12px',
+    gap: '8px',
+    pointerEvents: 'none',
+    maxHeight: '100vh',
+    overflow: 'visible',
+  },
+  toggleBtn: {
+    pointerEvents: 'auto',
+    background: 'rgba(0,0,0,0.6)',
+    backdropFilter: 'blur(8px)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '8px 14px',
+    fontSize: '13px',
+    cursor: 'pointer',
+    fontWeight: 600,
+  },
+  controls: {
+    pointerEvents: 'auto',
+    background: 'rgba(0,0,0,0.75)',
+    backdropFilter: 'blur(12px)',
+    borderRadius: '12px',
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    minWidth: '220px',
+    maxHeight: 'calc(100vh - 80px)',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    touchAction: 'pan-y',
+  },
+  label: {
+    color: '#aaa',
+    fontSize: '11px',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+  },
+  designBtn: (active) => ({
+    background: active ? '#4285f4' : 'rgba(255,255,255,0.1)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '6px 12px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    fontWeight: active ? 600 : 400,
+    transition: 'background 0.2s',
+  }),
+  row: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  autoBtn: (active) => ({
+    background: active ? '#16a34a' : 'rgba(255,255,255,0.1)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '6px 12px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    fontWeight: 600,
+  }),
+  fsBtn: {
+    background: 'rgba(255,255,255,0.1)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '6px 12px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    fontWeight: 600,
+  },
+};
 
 export default function GoogleReviews({ onBack }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(false);
   const [interval, setIntervalValue] = useState(30);
   const [showPanel, setShowPanel] = useState(false);
+  const [visible, setVisible] = useState(true);
   const timer = useRef(null);
   const googleData = useGoogleReviews();
-  const activeTheme = themes[activeIndex];
 
-  useEffect(() => { if (!autoRotate) return undefined; timer.current = setInterval(() => setActiveIndex(index => (index + 1) % themes.length), interval * 1000); return () => clearInterval(timer.current); }, [autoRotate, interval]);
-  const fullscreen = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
-  return <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}><GoogleTheme theme={activeTheme} data={googleData} /><div style={{ position: 'fixed', top: 12, right: 12, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}><button onClick={() => setShowPanel(!showPanel)} style={buttonStyle}>⚙</button>{showPanel && <div style={panelStyle}><button onClick={onBack} style={buttonStyle}>← Platforms</button><strong>Google Review Themes</strong>{themes.map((theme, index) => <button key={theme.name} onClick={() => setActiveIndex(index)} style={{ ...buttonStyle, background: index === activeIndex ? activeTheme.accent : '#283241' }}>{index + 1}. {theme.name}</button>)}<button onClick={fullscreen} style={buttonStyle}>⛶ Fullscreen</button><div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><button onClick={() => setAutoRotate(!autoRotate)} style={{ ...buttonStyle, background: autoRotate ? '#16803c' : '#283241' }}>{autoRotate ? 'ON' : 'OFF'}</button><select value={interval} onChange={event => setIntervalValue(Number(event.target.value))} style={{ padding: 7, borderRadius: 5 }}><option value={15}>15s</option><option value={30}>30s</option><option value={60}>60s</option></select></div></div>}</div></div>;
+  const switchTo = useCallback((index) => {
+    setVisible(false);
+    setTimeout(() => {
+      setActiveIndex(index);
+      setVisible(true);
+    }, 400);
+  }, []);
+
+  useEffect(() => {
+    if (!autoRotate) {
+      if (timer.current) clearInterval(timer.current);
+      return;
+    }
+
+    timer.current = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setActiveIndex((prev) => (prev + 1) % designs.length);
+        setVisible(true);
+      }, 400);
+    }, interval * 1000);
+
+    return () => clearInterval(timer.current);
+  }, [autoRotate, interval]);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  const { Component } = designs[activeIndex];
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 0.4s ease-in-out',
+        }}
+      >
+        <Component
+          followers={googleData.reviewCount}
+          username={googleData.name || 'Google Business'}
+          platform="google"
+          rating={googleData.rating}
+          platformLabel="Google Reviews"
+        />
+      </div>
+
+      {/* Control Panel */}
+      <div style={panelStyles.panel}>
+        <button
+          style={panelStyles.toggleBtn}
+          onClick={() => setShowPanel(!showPanel)}
+        >
+          ⚙
+        </button>
+
+        {showPanel && (
+          <div style={panelStyles.controls}>
+            <button 
+              style={panelStyles.fsBtn}
+              onClick={onBack}
+              title="Return to platform selection"
+            >
+              ← Back to Platforms
+            </button>
+
+            <div style={panelStyles.label}>Designs</div>
+            {designs.map((d, i) => (
+              <button
+                key={i}
+                style={panelStyles.designBtn(i === activeIndex)}
+                onClick={() => switchTo(i)}
+              >
+                {i + 1}. {d.name}
+              </button>
+            ))}
+
+            <div style={panelStyles.label}>Display</div>
+            <button style={panelStyles.fsBtn} onClick={toggleFullscreen}>
+              ⛶ Fullscreen
+            </button>
+
+            <div style={{ ...panelStyles.label, marginTop: '8px' }}>Auto Rotate</div>
+            <div style={panelStyles.row}>
+              <button
+                style={panelStyles.autoBtn(autoRotate)}
+                onClick={() => setAutoRotate(!autoRotate)}
+              >
+                {autoRotate ? 'ON' : 'OFF'}
+              </button>
+              <select
+                value={interval}
+                onChange={(e) => setIntervalValue(Number(e.target.value))}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                }}
+              >
+                <option value={15}>15s</option>
+                <option value={30}>30s</option>
+                <option value={45}>45s</option>
+                <option value={60}>60s</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
-
-const buttonStyle = { border: 0, borderRadius: 6, padding: '8px 12px', background: '#17202a', color: '#fff', cursor: 'pointer', fontWeight: 600 };
-const panelStyle = { display: 'flex', flexDirection: 'column', gap: 9, minWidth: 210, padding: 14, borderRadius: 10, background: 'rgba(0,0,0,.82)', color: '#fff', backdropFilter: 'blur(10px)' };

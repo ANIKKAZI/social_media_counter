@@ -2,7 +2,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAnimatedCount } from '../hooks/useAnimatedCount';
-import { InstagramIcon, formatCount } from '../components/shared';
+import { InstagramIcon, GoogleIcon, formatCount } from '../components/shared';
 
 const styles = {
   container: {
@@ -124,37 +124,70 @@ const styles = {
   },
 };
 
-export default function Design9({ followers, todayGrowth, username }) {
+export default function Design9({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel }) {
   const animatedCount = useAnimatedCount(followers);
+  const isGoogle = platform === 'google';
 
   return (
     <div style={styles.container}>
-      <div style={styles.bgText}>INSTA</div>
+      <div style={styles.bgText}>
+        {isGoogle ? 'GOOGLE' : 'INSTA'}
+      </div>
       <div style={styles.inner}>
         <div style={styles.left}>
           <div style={styles.header}>
-            <InstagramIcon size={32} color="#E1306C" />
-            <span style={styles.username}>@{username}</span>
+            {isGoogle ? (
+              <GoogleIcon size={32} color="#4285f4" />
+            ) : (
+              <InstagramIcon size={32} color="#E1306C" />
+            )}
+            <span style={styles.username}>{isGoogle ? username : `@${username}`}</span>
           </div>
-          <div style={styles.subtitle}>Follow Us on Instagram</div>
-          <div style={styles.bigLabel}>We Have</div>
-          <div style={styles.count}>{formatCount(animatedCount)}</div>
-          <div style={styles.followersLabel}>Followers</div>
-          <div style={styles.growth}>+{todayGrowth} TODAY</div>
+          <div style={styles.subtitle}>
+            {platformLabel || (isGoogle ? 'Google Reviews' : 'Follow Us on Instagram')}
+          </div>
+          <div style={styles.bigLabel}>
+            {isGoogle ? 'Our Rating' : 'We Have'}
+          </div>
+          <div style={styles.count}>
+            {isGoogle ? (rating ? rating.toFixed(1) : '5.0') : formatCount(animatedCount)}
+          </div>
+          <div style={styles.followersLabel}>
+            {isGoogle ? (
+              <>
+                <div style={{ fontSize: '12px', marginBottom: '2px' }}>
+                  ★★★★★ {rating ? `${rating.toFixed(1)} stars` : 'Rating'}
+                </div>
+                Reviews
+              </>
+            ) : (
+              'Followers'
+            )}
+          </div>
+          {!isGoogle && todayGrowth > 0 && (
+            <div style={styles.growth}>+{todayGrowth} TODAY</div>
+          )}
         </div>
         <div style={styles.right}>
           <div style={styles.qrWrap}>
             <QRCodeSVG
-              value={`https://instagram.com/${username}`}
+              value={
+                isGoogle
+                  ? process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review'
+                  : `https://instagram.com/${username}`
+              }
               size={160}
               fgColor="#111"
               bgColor="#fff"
               level="M"
             />
           </div>
-          <div style={styles.cta}>Scan to Follow Us</div>
+          <div style={styles.cta}>
+            {isGoogle ? 'Scan to Rate Us' : 'Scan to Follow Us'}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+

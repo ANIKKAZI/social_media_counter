@@ -11,3 +11,6 @@ export { default as Design10 } from './Design10';
 export { default as Design11 } from './Design11';
 export { default as Design12 } from './Design12';
 export { default as Design13 } from './Design13';
+export { default as DesignHalloween } from './DesignHalloween';
+export { default as DesignDiwali } from './DesignDiwali';
+export { getAllDesigns, getDesignById, getDesignIndexById, DESIGNS } from './designRegistry';
