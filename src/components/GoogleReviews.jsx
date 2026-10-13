@@ -3,11 +3,17 @@ import { getAllDesigns } from '../designs';
 
 const designs = getAllDesigns();
 
-const fallbackCount = Number(process.env.REACT_APP_GOOGLE_REVIEW_COUNT || 0);
-const fallbackRating = Number(process.env.REACT_APP_GOOGLE_RATING || 0);
-
-function useGoogleReviews() {
+function useGoogleReviews(config) {
+  const fallbackCount = Number(config?.googleFallbackCount || 0);
+  const fallbackRating = Number(config?.googleFallbackRating || 0);
   const [data, setData] = useState({ name: '', reviewCount: fallbackCount, rating: fallbackRating });
+  useEffect(() => {
+    setData(prev => ({
+      name: prev.name,
+      reviewCount: prev.reviewCount || fallbackCount,
+      rating: prev.rating || fallbackRating,
+    }));
+  }, [fallbackCount, fallbackRating]);
   useEffect(() => {
     let active = true;
     const load = () => {
@@ -115,14 +121,14 @@ const panelStyles = {
   },
 };
 
-export default function GoogleReviews({ onBack }) {
+export default function GoogleReviews({ config, onBack }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(false);
   const [interval, setIntervalValue] = useState(30);
   const [showPanel, setShowPanel] = useState(false);
   const [visible, setVisible] = useState(true);
   const timer = useRef(null);
-  const googleData = useGoogleReviews();
+  const googleData = useGoogleReviews(config);
 
   const switchTo = useCallback((index) => {
     setVisible(false);
@@ -175,6 +181,7 @@ export default function GoogleReviews({ onBack }) {
           platform="google"
           rating={googleData.rating}
           platformLabel="Google Reviews"
+          googleReviewUrl={config?.googleReviewUrl}
         />
       </div>
 

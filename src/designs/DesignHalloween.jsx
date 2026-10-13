@@ -219,6 +219,7 @@ export default function DesignHalloween({
   platform = 'instagram',
   rating,
   platformLabel,
+  googleReviewUrl,
 }) {
   const animatedCount = useAnimatedCount(followers);
   const isGoogle = platform === 'google';
@@ -277,7 +278,7 @@ export default function DesignHalloween({
             <QRCodeSVG
               value={
                 isGoogle
-                  ? process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review'
+                  ? googleReviewUrl || 'https://g.page/r/google-review'
                   : `https://instagram.com/${username}`
               }
               size={180}

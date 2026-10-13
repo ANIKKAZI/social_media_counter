@@ -95,7 +95,7 @@ function Flap({ digit, prevDigit }) {
 }
 
 /* -- Main component ------------------------------------------------------ */
-export default function Design11({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel }) {
+export default function Design11({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
   const animated = useAnimatedCount(followers);
 
   // Use the actual (non-interpolated) follower count for flap digits.
@@ -268,7 +268,7 @@ export default function Design11({ followers, todayGrowth, username, platform = 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '7px' }}>
                   <div style={{ padding: '9px', background: '#fff', borderRadius: '9px', boxShadow: '0 4px 18px rgba(0,0,0,0.6)' }}>
                     <QRCodeSVG
-                      value={platform === 'google' ? (process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://google.com') : `https://instagram.com/${username}`}
+                      value={platform === 'google' ? (googleReviewUrl || 'https://google.com') : `https://instagram.com/${username}`}
                       size={76}
                       fgColor="#111111"
                       bgColor="#ffffff"

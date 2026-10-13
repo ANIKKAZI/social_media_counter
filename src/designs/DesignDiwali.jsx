@@ -230,6 +230,7 @@ const styles = {
  * @param {string} props.platform - 'instagram' or 'google'
  * @param {number} props.rating - Google rating (for Google Reviews mode)
  * @param {string} props.platformLabel - Platform-specific label
+ * @param {string} props.googleReviewUrl - Google review QR URL
  */
 export default function DesignDiwali({
   followers,
@@ -238,6 +239,7 @@ export default function DesignDiwali({
   platform = 'instagram',
   rating,
   platformLabel,
+  googleReviewUrl,
 }) {
   const animatedCount = useAnimatedCount(followers);
   const isGoogle = platform === 'google';
@@ -302,7 +304,7 @@ export default function DesignDiwali({
             <QRCodeSVG
               value={
                 isGoogle
-                  ? process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review'
+                  ? googleReviewUrl || 'https://g.page/r/google-review'
                   : `https://instagram.com/${username}`
               }
               size={180}

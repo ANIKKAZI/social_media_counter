@@ -4,6 +4,7 @@ import SetupPage from './components/SetupPage';
 import { InstagramIcon, GoogleIcon } from './components/shared';
 import './App.css';
 import GoogleReviews from './components/GoogleReviews';
+import useRuntimeConfig from './hooks/useRuntimeConfig';
 
 const DEFAULT_FALLBACK_FETCH_INTERVAL_MS = 1_000;
 
@@ -26,6 +27,7 @@ function KioskSplash({ visible, onStart, platform }) {
 }
 
 function App() {
+  const runtimeConfig = useRuntimeConfig();
   const [kioskReady, setKioskReady] = useState(false);
   const [session, setSession] = useState(null);
   const [followers, setFollowers] = useState(0);
@@ -36,7 +38,7 @@ function App() {
   useEffect(() => {
     if (!hasSession) return undefined;
     let fallbackId;
-    let fallbackInterval = DEFAULT_FALLBACK_FETCH_INTERVAL_MS;
+    let fallbackInterval = runtimeConfig.fallbackPollIntervalMs || DEFAULT_FALLBACK_FETCH_INTERVAL_MS;
     const applyProfile = (fresh) => {
       setSession(prev => ({ ...prev, displayName: fresh.username }));
       setFollowers(prev => { const diff = fresh.followers - prev; if (diff > 0) setTodayGrowth(g => g + diff); return fresh.followers; });
@@ -47,11 +49,10 @@ function App() {
     const startFallback = () => {
       if (!fallbackId) fallbackId = setInterval(async () => { try { const res = await fetch('/api/followers', { cache: 'no-store' }); if (res.ok) applyProfile(await res.json()); } catch (_) { /* Backend may still be starting. */ } }, fallbackInterval);
     };
-    fetch('/api/config', { cache: 'no-store' }).then(res => res.ok ? res.json() : null).then(config => { if (config?.fallbackPollIntervalMs) fallbackInterval = config.fallbackPollIntervalMs; }).catch(() => {});
     stream.onerror = startFallback;
     return () => { stream.close(); if (fallbackId) clearInterval(fallbackId); };
-  }, [hasSession]);
-  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} onBack={() => setSession(null)} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
+  }, [hasSession, runtimeConfig.fallbackPollIntervalMs]);
+  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews config={runtimeConfig} onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} onBack={() => setSession(null)} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
 }
 
 export default App;

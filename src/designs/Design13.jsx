@@ -90,7 +90,7 @@ const CSS = `
 `;
 
 /* ── Main component ──────────────────────────────────────── */
-export default function Design13({ followers, todayGrowth = 0, username, platform = 'instagram', rating, platformLabel }) {
+export default function Design13({ followers, todayGrowth = 0, username, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
   const animated = useAnimatedCount(followers);
   const isGoogle = platform === 'google';
 
@@ -286,7 +286,7 @@ export default function Design13({ followers, todayGrowth = 0, username, platfor
             boxShadow: `0 6px 28px ${COLOR}30, 0 2px 8px rgba(0,0,0,0.5)`,
           }}>
             <QRCodeSVG
-              value={isGoogle ? (process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://google.com') : `https://instagram.com/${username}`}
+              value={isGoogle ? (googleReviewUrl || 'https://google.com') : `https://instagram.com/${username}`}
               size={90}
               fgColor="#111"
               bgColor="#fff"

@@ -1,70 +1,139 @@
-# Getting Started with Create React App
+# Social Media Counter - Capacitor Android App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Real-time social media counter display application for Android tablets. Displays live updates from Meta/Instagram, Google Reviews, and other platforms.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## **Quick Start**
 
-### `npm start`
+### **For Customers:**
+See [CUSTOMER_SETUP_GUIDE.md](CUSTOMER_SETUP_GUIDE.md)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### **For Developers:**
+See [CAPACITOR_DEPLOYMENT.md](CAPACITOR_DEPLOYMENT.md)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## **Project Structure**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+SocialMediaCounter/
+├── src/                    (React components)
+├── server/                 (Node.js backend)
+├── android/                (Capacitor Android project)
+├── public/                 (Static assets)
+├── build/                  (Production build)
+├── capacitor.config.ts     (Capacitor configuration)
+├── .env                    (Environment variables)
+└── package.json
+```
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## **Available Scripts**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### **Development**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm start        # Start React dev server (http://localhost:3000)
+npm run server   # Start Node.js backend (http://localhost:4000)
+npm run build    # Build React app for production
+```
 
-### `npm run eject`
+### **Building for Android**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+npm run build              # Build React app
+npx cap sync android       # Sync with Capacitor
+npx cap open android       # Open in Android Studio
+# Then build APK in Android Studio
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### **Testing**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm test         # Run unit tests
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## **Environment Configuration**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The app uses environment variables from `.env` file:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```env
+META_ACCESS_TOKEN=your-token-here
+GOOGLE_PLACES_API_KEY=your-key-here
+PORT=4000
+# ... other settings
+```
 
-### Code Splitting
+See `.env.example` for all available variables.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
+## **Deployment**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### **Android Tablet**
 
-### Making a Progressive Web App
+1. Build the app:
+   ```bash
+   npm run build
+   npx cap sync android
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+2. Generate APK in Android Studio:
+   - Click **Build → Generate Signed APK**
+   - Follow prompts to create signing key
 
-### Advanced Configuration
+3. Install on tablet:
+   ```bash
+   adb install app-release.apk
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+For detailed instructions, see [CAPACITOR_DEPLOYMENT.md](CAPACITOR_DEPLOYMENT.md)
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## **Features**
 
-### `npm run build` fails to minify
+✅ Real-time social media counter display  
+✅ Multiple platform integration (Meta, Google Reviews, etc.)  
+✅ Responsive design for tablets  
+✅ Offline capable  
+✅ Auto-start on device boot  
+✅ Easy configuration management  
+✅ Background service support  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+
+## **Technologies**
+
+- **Frontend:** React 19, JavaScript/TypeScript
+- **Backend:** Node.js, Express
+- **Mobile:** Capacitor, Android
+- **APIs:** Meta Graph API, Google Places API
+
+---
+
+## **Documentation**
+
+- [CAPACITOR_DEPLOYMENT.md](CAPACITOR_DEPLOYMENT.md) - Developer deployment guide
+- [CUSTOMER_SETUP_GUIDE.md](CUSTOMER_SETUP_GUIDE.md) - Customer installation guide
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
+- [.env.example](.env.example) - Environment variables template
+
+---
+
+## **Support**
+
+For issues or questions:
+1. Check documentation files
+2. Review error logs: `adb logcat`
+3. Verify `.env` configuration
+4. Ensure all API keys are valid
+
+---
+
+**Last Updated:** 2024  
+**Version:** 0.1.0

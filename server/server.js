@@ -2,7 +2,11 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const envPath = path.join(__dirname, '..', '.env');
+const rootDir = path.join(__dirname, '..');
+const defaultEnvPath = path.join(rootDir, '.env');
+const envPath = process.env.SOCIAL_COUNTER_ENV_PATH || defaultEnvPath;
+const buildDir = path.join(rootDir, 'build');
+const indexHtmlPath = path.join(buildDir, 'index.html');
 
 function loadEnv(filePath) {
   if (!fs.existsSync(filePath)) return {};
@@ -34,6 +38,12 @@ async function fetchFollowers() {
 const googleApiKey = env.GOOGLE_PLACES_API_KEY;
 const googlePlaceId = env.GOOGLE_PLACE_ID;
 const GOOGLE_CACHE_MS = Number(env.GOOGLE_POLL_INTERVAL_MS || 15_000);
+const publicConfig = {
+  fallbackPollIntervalMs: FRONTEND_FALLBACK_POLL_INTERVAL_MS,
+  googleReviewUrl: env.GOOGLE_REVIEW_URL || env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review',
+  googleFallbackCount: Number(env.GOOGLE_REVIEW_COUNT || env.REACT_APP_GOOGLE_REVIEW_COUNT || 0),
+  googleFallbackRating: Number(env.GOOGLE_RATING || env.REACT_APP_GOOGLE_RATING || 0),
+};
 let googleCache = null;
 
 async function fetchGoogleReviews() {
@@ -65,6 +75,39 @@ function sendJson(response, status, body) {
   response.end(JSON.stringify(body));
 }
 
+const contentTypes = {
+  '.css': 'text/css; charset=utf-8',
+  '.html': 'text/html; charset=utf-8',
+  '.ico': 'image/x-icon',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+};
+
+function serveStatic(requestPath, response) {
+  if (!fs.existsSync(indexHtmlPath)) return false;
+  const decodedPath = decodeURIComponent(requestPath);
+  const normalizedPath = path.normalize(decodedPath === '/' ? '/index.html' : decodedPath);
+  const relativePath = normalizedPath.replace(/^[/\\]+/, '');
+  const filePath = path.join(buildDir, relativePath);
+  const resolvedPath = path.resolve(filePath);
+  const resolvedBuildDir = path.resolve(buildDir);
+  const relativeToBuild = path.relative(resolvedBuildDir, resolvedPath);
+  const isInsideBuild = relativeToBuild && !relativeToBuild.startsWith('..') && !path.isAbsolute(relativeToBuild);
+  const targetPath = isInsideBuild && fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isFile()
+    ? resolvedPath
+    : indexHtmlPath;
+  const ext = path.extname(targetPath).toLowerCase();
+  response.writeHead(200, {
+    'Content-Type': contentTypes[ext] || 'application/octet-stream',
+    'Cache-Control': targetPath === indexHtmlPath ? 'no-store' : 'public, max-age=31536000, immutable',
+  });
+  fs.createReadStream(targetPath).pipe(response);
+  return true;
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
   if (url.pathname === '/api/google-reviews') {
@@ -72,7 +115,7 @@ const server = http.createServer(async (request, response) => {
     catch (error) { console.error(`[Google] ${error.message}`); return sendJson(response, 503, { error: error.message }); }
   }
   if (url.pathname === '/api/health') return sendJson(response, 200, { ok: true, metaConfigured: Boolean(accessToken) });
-  if (url.pathname === '/api/config') return sendJson(response, 200, { fallbackPollIntervalMs: FRONTEND_FALLBACK_POLL_INTERVAL_MS });
+  if (url.pathname === '/api/config') return sendJson(response, 200, publicConfig);
   if (url.pathname === '/api/followers') return latest ? sendJson(response, 200, latest) : sendJson(response, 503, { error: lastError?.message || 'Follower data is not ready.' });
   if (url.pathname === '/api/events') {
     response.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'Access-Control-Allow-Origin': '*', 'X-Accel-Buffering': 'no', 'Content-Encoding': 'identity' });
@@ -83,10 +126,17 @@ const server = http.createServer(async (request, response) => {
     request.on('close', () => clients.delete(response));
     return;
   }
-  sendJson(response, 404, { error: 'Not found' });
+  if (serveStatic(url.pathname, response)) return;
+  sendJson(response, 404, { error: 'Not found. Run npm run build before starting the production server.' });
 });
 
-server.listen(PORT, async () => { console.log(`Follower backend listening on http://localhost:${PORT}`); await refresh(); setInterval(refresh, POLL_INTERVAL_MS); });
+server.listen(PORT, async () => {
+  console.log(`Follower backend listening on http://localhost:${PORT}`);
+  console.log(`Reading local config from ${envPath}`);
+  if (!fs.existsSync(indexHtmlPath)) console.warn('React build not found. Run npm run build before using kiosk mode.');
+  await refresh();
+  setInterval(refresh, POLL_INTERVAL_MS);
+});
 
 setInterval(() => {
   for (const client of clients) client.write(': heartbeat\n\n');

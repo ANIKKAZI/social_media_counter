@@ -111,7 +111,7 @@ const styles = {
   },
 };
 
-export default function Design5({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel }) {
+export default function Design5({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
   const animatedCount = useAnimatedCount(followers);
   const isGoogle = platform === 'google';
 
@@ -153,7 +153,7 @@ export default function Design5({ followers, todayGrowth, username, platform = '
             <QRCodeSVG
               value={
                 isGoogle
-                  ? process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review'
+                  ? googleReviewUrl || 'https://g.page/r/google-review'
                   : `https://instagram.com/${username}`
               }
               size={160}

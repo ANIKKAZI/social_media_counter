@@ -132,7 +132,7 @@ function Flap({ digit, prevDigit }) {
 }
 
 /* ── Main component ─────────────────────────────────────────────────────── */
-export default function Design12({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel }) {
+export default function Design12({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
   const animated = useAnimatedCount(followers);
 
   const strVal = String(Math.max(0, Math.floor(followers))).padStart(6, '0');
@@ -286,7 +286,7 @@ export default function Design12({ followers, todayGrowth, username, platform = 
             border: '1px solid rgba(193,53,132,0.1)',
           }}>
             <QRCodeSVG
-              value={platform === 'google' ? (process.env.REACT_APP_GOOGLE_REVIEW_URL || 'https://google.com') : `https://instagram.com/${username}`}
+              value={platform === 'google' ? (googleReviewUrl || 'https://google.com') : `https://instagram.com/${username}`}
                 size={130}
               fgColor="#2a1a2e"
               bgColor="#ffffff"
