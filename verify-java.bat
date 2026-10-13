@@ -5,8 +5,8 @@ echo ================================================================
 echo.
 
 REM Check Java 21 paths
-set JAVA_21_PATH=C:\Program Files\Java\jdk-21
-set JAVA_21_ALT=C:\Program Files\Java\jdk-21.0.1
+set JAVA_21_PATH=C:\Program Files\Java\jdk-21.0.12.1
+set JAVA_21_ALT=C:\Program Files\Java\jdk-21
 
 echo Checking for Java 21 installation...
 echo.

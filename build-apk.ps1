@@ -11,8 +11,8 @@ Write-Host ""
 
 # Java 21 paths
 $Java21Paths = @(
-    "C:\Program Files\Java\jdk-21",
-    "C:\Program Files\Java\jdk-21.0.1"
+    "C:\Program Files\Java\jdk-21.0.12.1",
+    "C:\Program Files\Java\jdk-21"
 )
 
 # Find Java 21
