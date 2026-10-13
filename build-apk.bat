@@ -32,14 +32,16 @@ if exist "%JAVA_21_PATH%" (
 REM Verify Java version
 echo.
 echo Verifying Java version...
-"%JAVA_HOME%\bin\java" -version 2>&1 | findstr /R "21" >nul
+"%JAVA_HOME%\bin\java" -version 2>&1 | findstr /I "21" >nul
 if errorlevel 1 (
-    echo [!] Java 21 verification failed
+    echo [!] Java version verification failed
+    echo.
+    echo Java version found:
     "%JAVA_HOME%\bin\java" -version
-    pause
-    exit /b 1
+    echo.
+    echo Using Java at: %JAVA_HOME%
 )
-echo [✓] Java 21 verified
+echo [✓] Java configured at: %JAVA_HOME%
 echo.
 
 REM Check for Android SDK
@@ -70,9 +72,13 @@ echo.
 REM Create/update local.properties with Android SDK path
 set LOCAL_PROPS=android\local.properties
 echo Creating local.properties with Android SDK path...
+REM Escape backslashes for Gradle properties file
+setlocal enabledelayedexpansion
+set ESCAPED_SDK_PATH=!ANDROID_SDK_PATH:\=\\!
 (
-    echo sdk.dir=%ANDROID_SDK_PATH%
+    echo sdk.dir=!ESCAPED_SDK_PATH!
 ) > "%LOCAL_PROPS%"
+endlocal
 echo [✓] local.properties created
 echo.
 
@@ -120,13 +126,51 @@ cd ..
 echo [✓] APK build successful
 echo.
 
-REM Step 4: Verify APK was created
+REM Step 4: Sign APK
 echo ================================================================
-echo [4/4] Verifying APK...
+echo [4/5] Signing APK...
 echo ================================================================
-set APK_PATH=android\app\build\outputs\apk\release\app-release.apk
+set KEYSTORE_PATH=android\app\release-key.jks
+set UNSIGNED_APK=android\app\build\outputs\apk\release\app-release-unsigned.apk
+set JAVA_TOOLS=%JAVA_21_PATH%\bin
+
+REM Check if keystore exists, if not create it
+if not exist "%KEYSTORE_PATH%" (
+    echo Creating signing keystore...
+    "%JAVA_TOOLS%\keytool.exe" -genkey -v -keystore "%KEYSTORE_PATH%" ^
+        -keyalg RSA -keysize 2048 -validity 10000 ^
+        -alias social-media-counter ^
+        -dname "CN=Social Media Counter, OU=Development, O=SocialMediaCounter, L=Global, S=Global, C=US" ^
+        -storepass "socialmediacounter123" ^
+        -keypass "socialmediacounter123"
+    if errorlevel 1 (
+        echo [!] Failed to create keystore
+        pause
+        exit /b 1
+    )
+    echo [✓] Keystore created
+)
+
+REM Sign the APK
+echo Signing %UNSIGNED_APK%...
+"%JAVA_TOOLS%\jarsigner.exe" -verbose -sigalg SHA256withRSA -digestalg SHA-256 ^
+    -keystore "%KEYSTORE_PATH%" -storepass "socialmediacounter123" ^
+    "%UNSIGNED_APK%" social-media-counter
+if errorlevel 1 (
+    echo [!] Failed to sign APK
+    pause
+    exit /b 1
+)
+echo [✓] APK signed successfully
+echo.
+
+REM Step 5: Verify APK was created
+echo ================================================================
+echo [5/5] Verifying APK...
+echo ================================================================
+set APK_PATH=android\app\build\outputs\apk\release\app-release-unsigned.apk
 if exist "%APK_PATH%" (
-    echo [✓] APK created successfully!
+    echo [✓] APK created and signed successfully!
     echo.
     echo Location: %APK_PATH%
     echo.

@@ -108,7 +108,7 @@ Write-Host ""
 
 # Step 3: Build APK
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "[3/4] Building APK with Gradle..." -ForegroundColor Cyan
+Write-Host "[3/5] Building APK with Gradle..." -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 Push-Location android
 $env:JAVA_HOME = $JavaHome
@@ -123,14 +123,53 @@ Pop-Location
 Write-Host "[✓] APK build successful" -ForegroundColor Green
 Write-Host ""
 
-# Step 4: Verify APK
+# Step 4: Sign APK
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "[4/4] Verifying APK..." -ForegroundColor Cyan
+Write-Host "[4/5] Signing APK..." -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
-$apkPath = "android\app\build\outputs\apk\release\app-release.apk"
+
+$keystorePath = "android\app\release-key.jks"
+$unsignedApk = "android\app\build\outputs\apk\release\app-release-unsigned.apk"
+$javaTools = "$JavaHome\bin"
+
+# Check if keystore exists, if not create it
+if (-not (Test-Path $keystorePath)) {
+    Write-Host "Creating signing keystore..." -ForegroundColor Yellow
+    & "$javaTools\keytool.exe" -genkey -v -keystore $keystorePath `
+        -keyalg RSA -keysize 2048 -validity 10000 `
+        -alias social-media-counter `
+        -dname "CN=Social Media Counter, OU=Development, O=SocialMediaCounter, L=Global, ST=Global, C=US" `
+        -storepass "socialmediacounter123" `
+        -keypass "socialmediacounter123"
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[!] Failed to create keystore" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "[✓] Keystore created" -ForegroundColor Green
+}
+
+# Sign the APK
+Write-Host "Signing $unsignedApk..." -ForegroundColor Yellow
+& "$javaTools\jarsigner.exe" -verbose -sigalg SHA256withRSA -digestalg SHA-256 `
+    -keystore $keystorePath -storepass "socialmediacounter123" `
+    $unsignedApk social-media-counter
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[!] Failed to sign APK" -ForegroundColor Red
+    exit 1
+}
+Write-Host "[✓] APK signed successfully" -ForegroundColor Green
+Write-Host ""
+
+# Step 5: Verify APK
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host "[5/5] Verifying APK..." -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
+$apkPath = "android\app\build\outputs\apk\release\app-release-unsigned.apk"
 if (Test-Path $apkPath) {
     $apkSize = (Get-Item $apkPath).Length / 1MB
-    Write-Host "[✓] APK created successfully!" -ForegroundColor Green
+    Write-Host "[✓] APK created and signed successfully!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Location: $apkPath" -ForegroundColor Cyan
     Write-Host "Size: $([math]::Round($apkSize, 2)) MB" -ForegroundColor Cyan
