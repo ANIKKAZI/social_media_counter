@@ -41,7 +41,37 @@ if (-not $JavaHome) {
 $env:JAVA_HOME = $JavaHome
 $env:PATH = "$JavaHome\bin;$env:PATH"
 
-# Verify Java version
+# Find Android SDK
+Write-Host "Checking for Android SDK..." -ForegroundColor Yellow
+$AndroidSdkPath = "$env:USERPROFILE\AppData\Local\Android\Sdk"
+
+if (-not (Test-Path $AndroidSdkPath)) {
+    Write-Host "[!] Android SDK not found!" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Android SDK is required to build APK." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "To install:" -ForegroundColor Yellow
+    Write-Host "  1. Download Android Studio from:" -ForegroundColor Cyan
+    Write-Host "     https://developer.android.com/studio" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  2. Install it (default location works)" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  3. Then run this script again" -ForegroundColor Cyan
+    Write-Host ""
+    exit 1
+}
+
+Write-Host "[✓] Found Android SDK at: $AndroidSdkPath" -ForegroundColor Green
+
+# Create local.properties with Android SDK path
+Write-Host "Creating local.properties..." -ForegroundColor Yellow
+$localPropsPath = "android\local.properties"
+$localPropsContent = "sdk.dir=$AndroidSdkPath"
+$localPropsContent | Out-File -FilePath $localPropsPath -Encoding ASCII
+Write-Host "[✓] local.properties created" -ForegroundColor Green
+Write-Host ""
+
+# Set environment
 Write-Host "Verifying Java version..." -ForegroundColor Yellow
 $javaVersion = & "$JavaHome\bin\java" -version 2>&1
 if ($javaVersion -notmatch "21") {
@@ -81,6 +111,8 @@ Write-Host "================================================================" -F
 Write-Host "[3/4] Building APK with Gradle..." -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 Push-Location android
+$env:JAVA_HOME = $JavaHome
+$env:ANDROID_SDK_ROOT = $AndroidSdkPath
 & ".\gradlew.bat" assembleRelease
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[!] Gradle build failed" -ForegroundColor Red

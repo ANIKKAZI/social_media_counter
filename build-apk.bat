@@ -42,6 +42,40 @@ if errorlevel 1 (
 echo [✓] Java 21 verified
 echo.
 
+REM Check for Android SDK
+echo Checking for Android SDK...
+set ANDROID_SDK_PATH=%USERPROFILE%\AppData\Local\Android\Sdk
+
+if not exist "%ANDROID_SDK_PATH%" (
+    echo [!] Android SDK not found!
+    echo.
+    echo Android SDK is required to build APK.
+    echo.
+    echo To fix this:
+    echo 1. Download Android Studio from:
+    echo    https://developer.android.com/studio
+    echo.
+    echo 2. Install it (default location works)
+    echo.
+    echo 3. Then run this script again:
+    echo    build-apk.bat
+    echo.
+    pause
+    exit /b 1
+)
+
+echo [✓] Found Android SDK at: %ANDROID_SDK_PATH%
+echo.
+
+REM Create/update local.properties with Android SDK path
+set LOCAL_PROPS=android\local.properties
+echo Creating local.properties with Android SDK path...
+(
+    echo sdk.dir=%ANDROID_SDK_PATH%
+) > "%LOCAL_PROPS%"
+echo [✓] local.properties created
+echo.
+
 REM Step 1: Build React app
 echo ================================================================
 echo [1/4] Building React app...
@@ -74,6 +108,7 @@ echo [3/4] Building APK with Gradle...
 echo ================================================================
 cd android
 set JAVA_HOME=%JAVA_HOME%
+set ANDROID_SDK_ROOT=%ANDROID_SDK_PATH%
 call gradlew.bat assembleRelease
 if errorlevel 1 (
     echo [!] Gradle build failed
