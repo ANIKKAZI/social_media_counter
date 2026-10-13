@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fetchRuntimeConfig } from '../liveData';
 
 const defaultConfig = {
   fallbackPollIntervalMs: 1000,
@@ -12,8 +13,7 @@ export default function useRuntimeConfig() {
 
   useEffect(() => {
     let active = true;
-    fetch('/api/config', { cache: 'no-store' })
-      .then(res => (res.ok ? res.json() : null))
+    fetchRuntimeConfig()
       .then(nextConfig => {
         if (active && nextConfig) setConfig(prev => ({ ...prev, ...nextConfig }));
       })

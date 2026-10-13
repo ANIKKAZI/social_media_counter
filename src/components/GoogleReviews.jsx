@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { getAllDesigns } from '../designs';
+import { fetchGoogleReviews } from '../liveData';
 
 const designs = getAllDesigns();
 
@@ -16,13 +17,9 @@ function useGoogleReviews(config) {
   }, [fallbackCount, fallbackRating]);
   useEffect(() => {
     let active = true;
-    const load = () => {
-      console.log(`[Google Reviews] polling at ${new Date().toLocaleTimeString()}`);
-      return fetch('/api/google-reviews', { cache: 'no-store' })
-        .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
-        .then(d => { console.log(`[Google Reviews] ${d.name}: ${d.rating} stars, ${d.reviewCount} reviews`); if (active) setData(d); })
-        .catch(error => console.warn(`[Google Reviews] poll failed: ${error.message}`));
-    };
+    const load = () => fetchGoogleReviews()
+      .then(d => { console.log(`[Google Reviews] ${d.name}: ${d.rating} stars, ${d.reviewCount} reviews`); if (active) setData(d); })
+      .catch(error => console.warn(`[Google Reviews] poll failed: ${error.message}`));
     load();
     const id = setInterval(load, 20000);
     return () => { active = false; clearInterval(id); };

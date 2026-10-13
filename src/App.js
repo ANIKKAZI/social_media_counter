@@ -5,6 +5,7 @@ import { InstagramIcon, GoogleIcon } from './components/shared';
 import './App.css';
 import GoogleReviews from './components/GoogleReviews';
 import useRuntimeConfig from './hooks/useRuntimeConfig';
+import { fetchInstagramProfile, isNativeApp } from './liveData';
 
 const DEFAULT_FALLBACK_FETCH_INTERVAL_MS = 1_000;
 
@@ -43,14 +44,18 @@ function App() {
       setSession(prev => ({ ...prev, displayName: fresh.username }));
       setFollowers(prev => { const diff = fresh.followers - prev; if (diff > 0) setTodayGrowth(g => g + diff); return fresh.followers; });
     };
-    const stream = new EventSource('/api/events');
-    stream.onopen = () => { if (fallbackId) { clearInterval(fallbackId); fallbackId = undefined; } };
-    stream.onmessage = (event) => { try { applyProfile(JSON.parse(event.data)); } catch (_) { /* Ignore malformed events. */ } };
+    const stream = isNativeApp ? null : new EventSource('/api/events');
     const startFallback = () => {
-      if (!fallbackId) fallbackId = setInterval(async () => { try { const res = await fetch('/api/followers', { cache: 'no-store' }); if (res.ok) applyProfile(await res.json()); } catch (_) { /* Backend may still be starting. */ } }, fallbackInterval);
+      if (!fallbackId) fallbackId = setInterval(async () => { try { applyProfile(await fetchInstagramProfile()); } catch (_) { /* Backend may still be starting. */ } }, fallbackInterval);
     };
-    stream.onerror = startFallback;
-    return () => { stream.close(); if (fallbackId) clearInterval(fallbackId); };
+    if (stream) {
+      stream.onopen = () => { if (fallbackId) { clearInterval(fallbackId); fallbackId = undefined; } };
+      stream.onmessage = (event) => { try { applyProfile(JSON.parse(event.data)); } catch (_) { /* Ignore malformed events. */ } };
+      stream.onerror = startFallback;
+    } else {
+      startFallback();
+    }
+    return () => { stream?.close(); if (fallbackId) clearInterval(fallbackId); };
   }, [hasSession, runtimeConfig.fallbackPollIntervalMs]);
   return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews config={runtimeConfig} onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} onBack={() => setSession(null)} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
 }

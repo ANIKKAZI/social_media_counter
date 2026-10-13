@@ -1,28 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { InstagramIcon, GoogleIcon } from './shared';
 
-async function fetchInstagramProfile() {
-  // Try backend first (if running), fall back to direct API call
-  try {
-    const res = await fetch('/api/followers', { signal: AbortSignal.timeout(5000) });
-    if (res.ok) {
-      const data = await res.json();
-      if (!data.error) return { username: data.username, followers: Number(data.followers) || 0 };
-    }
-  } catch (e) {
-    console.log('Backend unavailable, using direct API call');
-  }
-  
-  // Direct API call (works offline in APK)
-  const token = localStorage.getItem('ig_token') || window.INSTAGRAM_TOKEN;
-  if (!token) throw new Error('Instagram token not configured. Please set REACT_APP_INSTAGRAM_TOKEN in .env');
-  
-  const url = `https://graph.instagram.com/v25.0/me?fields=id,username,followers_count&access_token=${encodeURIComponent(token)}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
-  return { username: data.username, followers: Number(data.followers_count) || 0 };
-}
+import { fetchInstagramProfile } from '../liveData';
 
 export default function SetupPage({ onConnect }) {
   const [platform, setPlatform] = useState(null);
