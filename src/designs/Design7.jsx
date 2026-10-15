@@ -2,7 +2,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAnimatedCount } from '../hooks/useAnimatedCount';
-import { InstagramIcon, GoogleIcon } from '../components/shared';
+import { ProfileAvatar, GoogleIcon } from '../components/shared';
 
 function FlipDigit({ digit }) {
   return (
@@ -150,7 +150,7 @@ const styles = {
   },
 };
 
-export default function Design7({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
+export default function Design7({ followers, todayGrowth, username, profilePictureUrl, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
   const animatedCount = useAnimatedCount(followers);
   const isGoogle = platform === 'google';
 
@@ -161,7 +161,7 @@ export default function Design7({ followers, todayGrowth, username, platform = '
           {isGoogle ? (
             <GoogleIcon size={36} color="#e94560" />
           ) : (
-            <InstagramIcon size={36} color="#e94560" />
+            <ProfileAvatar url={profilePictureUrl} size={36} color="#e94560" />
           )}
           <span style={styles.username}>{isGoogle ? username : `@${username}`}</span>
         </div>

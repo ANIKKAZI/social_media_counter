@@ -3,6 +3,7 @@ import { getAllDesigns } from '../designs';
 import { fetchGoogleReviews } from '../liveData';
 
 const designs = getAllDesigns();
+const GOOGLE_POLL_INTERVAL_MS = 5 * 60 * 1000;
 
 function useGoogleReviews(config) {
   const fallbackCount = Number(config?.googleFallbackCount || 0);
@@ -21,7 +22,7 @@ function useGoogleReviews(config) {
       .then(d => { console.log(`[Google Reviews] ${d.name}: ${d.rating} stars, ${d.reviewCount} reviews`); if (active) setData(d); })
       .catch(error => console.warn(`[Google Reviews] poll failed: ${error.message}`));
     load();
-    const id = setInterval(load, 20000);
+    const id = setInterval(load, GOOGLE_POLL_INTERVAL_MS);
     return () => { active = false; clearInterval(id); };
   }, []);
   return data;

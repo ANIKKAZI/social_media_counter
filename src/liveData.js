@@ -11,15 +11,15 @@ export async function fetchInstagramProfile() {
     const res = await fetch('/api/followers', { cache: 'no-store' });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
-    return { username: data.username, followers: Number(data.followers) || 0 };
+    return { username: data.username, followers: Number(data.followers) || 0, profilePictureUrl: data.profilePictureUrl || null };
   }
 
   const token = process.env.REACT_APP_INSTAGRAM_TOKEN;
   if (!token) throw new Error('Instagram token not configured. Set META_ACCESS_TOKEN in .env and rebuild the APK.');
-  const res = await fetch(`https://graph.instagram.com/v25.0/me?fields=id,username,followers_count&access_token=${encodeURIComponent(token)}`);
+  const res = await fetch(`https://graph.instagram.com/v25.0/me?fields=id,username,followers_count,profile_picture_url&access_token=${encodeURIComponent(token)}`);
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
-  return { username: data.username, followers: Number(data.followers_count) || 0 };
+  return { username: data.username, followers: Number(data.followers_count) || 0, profilePictureUrl: data.profile_picture_url || null };
 }
 
 export async function fetchGoogleReviews() {

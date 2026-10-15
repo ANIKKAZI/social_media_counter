@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAnimatedCount } from '../hooks/useAnimatedCount';
-import { InstagramIcon, GoogleIcon, formatCount } from '../components/shared';
+import { ProfileAvatar, GoogleIcon, formatCount } from '../components/shared';
 
 /* -- Flap geometry ------------------------------------------------------- */
 const FW = 110;
@@ -95,7 +95,7 @@ function Flap({ digit, prevDigit }) {
 }
 
 /* -- Main component ------------------------------------------------------ */
-export default function Design11({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
+export default function Design11({ followers, todayGrowth, username, profilePictureUrl, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
   const animated = useAnimatedCount(followers);
 
   // Use the actual (non-interpolated) follower count for flap digits.
@@ -189,7 +189,7 @@ export default function Design11({ followers, todayGrowth, username, platform = 
                 {platform === 'google' ? (
                   <GoogleIcon size={18} />
                 ) : (
-                  <InstagramIcon size={18} color="#aaa" />
+                  <ProfileAvatar url={profilePictureUrl} size={18} color="#aaa" />
                 )}
                 <span style={{ fontSize: '14px', fontWeight: 300, color: '#aaa', letterSpacing: '4px', textTransform: 'uppercase' }}>
                   {platform === 'google' ? username : `@${username}`}

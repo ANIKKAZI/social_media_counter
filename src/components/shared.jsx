@@ -1,4 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
+/* Instagram profile picture; falls back to the icon when there is no URL or it fails to load (CDN links expire). */
+export const ProfileAvatar = ({ url, size = 48, color = '#E1306C', fallback = null }) => {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [url]);
+  if (!url || failed) return fallback || <InstagramIcon size={size} color={color} />;
+  return (
+    <img
+      src={url}
+      alt=""
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+      style={{ width: size, height: size, flexShrink: 0, borderRadius: '50%', objectFit: 'cover', boxSizing: 'border-box', border: `2px solid ${color}`, display: 'block' }}
+    />
+  );
+};
 
 export const InstagramIcon = ({ size = 48, color = '#E1306C', style = {} }) => (
   <svg

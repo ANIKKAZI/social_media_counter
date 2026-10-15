@@ -28,16 +28,18 @@ const clients = new Set();
 
 async function fetchFollowers() {
   if (!accessToken || accessToken === 'your_meta_access_token_here') throw new Error('META_ACCESS_TOKEN is missing in the root .env file.');
-  const url = `https://graph.instagram.com/v25.0/me?fields=id,username,followers_count&access_token=${encodeURIComponent(accessToken)}`;
+  const url = `https://graph.instagram.com/v25.0/me?fields=id,username,followers_count,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`;
   const response = await fetch(url);
   const data = await response.json();
   if (!response.ok || data.error) throw new Error(data.error?.message || `Meta API HTTP ${response.status}`);
-  return { id: data.id, username: data.username, followers: Number(data.followers_count) || 0, updatedAt: new Date().toISOString() };
+  return { id: data.id, username: data.username, followers: Number(data.followers_count) || 0, profilePictureUrl: data.profile_picture_url || null, updatedAt: new Date().toISOString() };
 }
 
 const googleApiKey = env.GOOGLE_PLACES_API_KEY;
 const googlePlaceId = env.GOOGLE_PLACE_ID;
-const GOOGLE_CACHE_MS = Number(env.GOOGLE_POLL_INTERVAL_MS || 15_000);
+const GOOGLE_CACHE_MS = Number(env.GOOGLE_POLL_INTERVAL_MS || 300_000);
+// Small grace so a client polling on the same period isn't served the previous cache hit
+const GOOGLE_CACHE_GRACE_MS = Math.min(5_000, GOOGLE_CACHE_MS / 10);
 const publicConfig = {
   fallbackPollIntervalMs: FRONTEND_FALLBACK_POLL_INTERVAL_MS,
   googleReviewUrl: env.GOOGLE_REVIEW_URL || env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review',
@@ -48,7 +50,7 @@ let googleCache = null;
 
 async function fetchGoogleReviews() {
   if (!googleApiKey || !googlePlaceId) throw new Error('GOOGLE_PLACES_API_KEY and GOOGLE_PLACE_ID must be set in the root .env file.');
-  if (googleCache && Date.now() - googleCache.fetchedAt < GOOGLE_CACHE_MS) return googleCache.data;
+  if (googleCache && Date.now() - googleCache.fetchedAt < GOOGLE_CACHE_MS - GOOGLE_CACHE_GRACE_MS) return googleCache.data;
   const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(googlePlaceId)}`, {
     headers: { 'X-Goog-Api-Key': googleApiKey, 'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount' },
   });

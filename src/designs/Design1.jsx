@@ -2,7 +2,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAnimatedCount } from '../hooks/useAnimatedCount';
-import { InstagramIcon, GoogleIcon, formatCount } from '../components/shared';
+import { ProfileAvatar, GoogleIcon, formatCount } from '../components/shared';
 
 const styles = {
   container: {
@@ -94,7 +94,7 @@ const styles = {
   },
 };
 
-export default function Design1({ followers, todayGrowth, username, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
+export default function Design1({ followers, todayGrowth, username, profilePictureUrl, platform = 'instagram', rating, platformLabel, googleReviewUrl }) {
   const animatedCount = useAnimatedCount(followers);
   const isGoogle = platform === 'google';
 
@@ -106,7 +106,7 @@ export default function Design1({ followers, todayGrowth, username, platform = '
             {isGoogle ? (
               <GoogleIcon size={40} />
             ) : (
-              <InstagramIcon size={40} color="#111" />
+              <ProfileAvatar url={profilePictureUrl} size={40} color="#111" />
             )}
             <span style={styles.username}>{isGoogle ? username : `@${username}`}</span>
           </div>

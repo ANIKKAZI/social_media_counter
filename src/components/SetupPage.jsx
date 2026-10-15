@@ -14,7 +14,7 @@ export default function SetupPage({ onConnect }) {
     const connect = async () => {
       try {
         const profile = await fetchInstagramProfile();
-        if (!cancelled) onConnect({ platform: 'instagram', displayName: profile.username, handle: profile.username, followers: profile.followers, isLive: true });
+        if (!cancelled) onConnect({ platform: 'instagram', displayName: profile.username, handle: profile.username, profilePictureUrl: profile.profilePictureUrl, followers: profile.followers, isLive: true });
       } catch (err) {
         if (!cancelled) { setError(err.message || 'Unable to load Instagram data.'); setLoading(false); }
       }

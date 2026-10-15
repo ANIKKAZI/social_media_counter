@@ -41,7 +41,7 @@ function App() {
     let fallbackId;
     let fallbackInterval = runtimeConfig.fallbackPollIntervalMs || DEFAULT_FALLBACK_FETCH_INTERVAL_MS;
     const applyProfile = (fresh) => {
-      setSession(prev => ({ ...prev, displayName: fresh.username }));
+      setSession(prev => ({ ...prev, displayName: fresh.username, profilePictureUrl: fresh.profilePictureUrl || prev.profilePictureUrl }));
       setFollowers(prev => { const diff = fresh.followers - prev; if (diff > 0) setTodayGrowth(g => g + diff); return fresh.followers; });
     };
     const stream = isNativeApp ? null : new EventSource('/api/events');
@@ -57,7 +57,7 @@ function App() {
     }
     return () => { stream?.close(); if (fallbackId) clearInterval(fallbackId); };
   }, [hasSession, runtimeConfig.fallbackPollIntervalMs]);
-  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews config={runtimeConfig} onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} onBack={() => setSession(null)} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
+  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews config={runtimeConfig} onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} profilePictureUrl={session.profilePictureUrl} onBack={() => setSession(null)} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
 }
 
 export default App;
