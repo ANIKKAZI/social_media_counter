@@ -94,7 +94,7 @@ const panelStyles = {
   },
 };
 
-export default function DisplayManager({ followers, todayGrowth, username, profilePictureUrl, onBack }) {
+export default function DisplayManager({ followers, todayGrowth, username, profilePictureUrl, onBack, config }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(false);
   const [rotateInterval, setRotateInterval] = useState(30);
@@ -154,6 +154,7 @@ export default function DisplayManager({ followers, todayGrowth, username, profi
           username={username}
           profilePictureUrl={profilePictureUrl}
           platform="instagram"
+          spinConfig={config}
         />
       </div>
 

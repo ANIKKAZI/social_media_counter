@@ -22,6 +22,25 @@ const POLL_INTERVAL_MS = Number(env.META_POLL_INTERVAL_MS || 30_000);
 const FRONTEND_FALLBACK_POLL_INTERVAL_MS = Number(env.FRONTEND_FALLBACK_POLL_INTERVAL_MS || 1_000);
 const SSE_HEARTBEAT_INTERVAL_MS = Number(env.SSE_HEARTBEAT_INTERVAL_MS || 15_000);
 const accessToken = env.META_ACCESS_TOKEN;
+const spinRewards = Array.from({ length: 8 }, (_, index) => {
+  const number = index + 1;
+  const fallback = [
+    ['10% OFF', 'Enjoy 10% off your next visit', '#0879f9'],
+    ['15% OFF', 'Enjoy 15% off your next visit', '#00a9a8'],
+    ['20% OFF', 'Enjoy 20% off your next visit', '#0862e9'],
+    ['FREE GIFT', 'A little gift from us', '#8100e8'],
+    ['FREE ADD-ON', 'Choose a complimentary add-on', '#7900eb'],
+    ['BUY 1 GET 1', 'Buy one, get one on your next visit', '#e40083'],
+    ['BONUS POINTS', 'Bonus points added to your rewards', '#00a9a8'],
+    ['TRY AGAIN', 'Thanks for playing—come back soon', '#dc0076'],
+  ][index];
+  return {
+    label: env[`SPIN_REWARD_${number}_LABEL`] || fallback[0],
+    description: env[`SPIN_REWARD_${number}_DESCRIPTION`] || fallback[1],
+    color: env[`SPIN_REWARD_${number}_COLOR`] || fallback[2],
+    active: !/^false|0|no$/i.test(env[`SPIN_REWARD_${number}_ACTIVE`] || 'true'),
+  };
+});
 let latest = null;
 let lastError = null;
 const clients = new Set();
@@ -45,6 +64,13 @@ const publicConfig = {
   googleReviewUrl: env.GOOGLE_REVIEW_URL || env.REACT_APP_GOOGLE_REVIEW_URL || 'https://g.page/r/google-review',
   googleFallbackCount: Number(env.GOOGLE_REVIEW_COUNT || env.REACT_APP_GOOGLE_REVIEW_COUNT || 0),
   googleFallbackRating: Number(env.GOOGLE_RATING || env.REACT_APP_GOOGLE_RATING || 0),
+  spinCallToAction: env.SPIN_CALL_TO_ACTION || 'Follow us or share a review to play',
+  spinRedemptionInstructions: env.SPIN_REDEMPTION_INSTRUCTIONS || 'Show this screen to a team member to redeem. Valid for 30 days.',
+  spinCampaignEnabled: !/^false|0|no$/i.test(env.SPIN_CAMPAIGN_ENABLED || 'true'),
+  spinCampaignStart: env.SPIN_CAMPAIGN_START || '',
+  spinCampaignEnd: env.SPIN_CAMPAIGN_END || '',
+  spinLimitPerCustomer: Math.max(1, Number(env.SPIN_LIMIT_PER_CUSTOMER || 1)),
+  spinRewards,
 };
 let googleCache = null;
 

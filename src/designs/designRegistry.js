@@ -19,6 +19,8 @@ import Design12 from './Design12';
 import Design13 from './Design13';
 import DesignHalloween from './DesignHalloween';
 import DesignDiwali from './DesignDiwali';
+import DesignTorontoPuzzle from './DesignTorontoPuzzle';
+import DesignSpinToWin from './DesignSpinToWin';
 
 export const DESIGNS = [
   { id: 'minimal-clean', Component: Design1, name: 'Minimal Clean', category: 'instagram' },
@@ -34,6 +36,8 @@ export const DESIGNS = [
   { id: 'kiosk-dashboard', Component: Design11, name: 'Kiosk Dashboard', category: 'instagram' },
   { id: 'instagram-flip', Component: Design12, name: 'Instagram Flip', category: 'instagram' },
   { id: 'lametric-led', Component: Design13, name: 'LaMetric LED', category: 'instagram' },
+  { id: 'toronto-puzzle', Component: DesignTorontoPuzzle, name: 'Toronto Puzzle', category: 'instagram' },
+  { id: 'spin-to-win', Component: DesignSpinToWin, name: 'Spin to Win', category: 'engagement' },
   { id: 'halloween', Component: DesignHalloween, name: 'Halloween Special', category: 'holiday' },
   { id: 'diwali', Component: DesignDiwali, name: 'Diwali Celebration', category: 'holiday' },
 ];

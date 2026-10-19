@@ -13,4 +13,5 @@ export { default as Design12 } from './Design12';
 export { default as Design13 } from './Design13';
 export { default as DesignHalloween } from './DesignHalloween';
 export { default as DesignDiwali } from './DesignDiwali';
+export { default as DesignTorontoPuzzle } from './DesignTorontoPuzzle';
 export { getAllDesigns, getDesignById, getDesignIndexById, DESIGNS } from './designRegistry';

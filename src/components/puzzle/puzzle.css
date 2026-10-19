@@ -1,0 +1,389 @@
+/* Toronto puzzle counter. Sizes derive from --tp-unit so the band (wide screens)
+   and split (tablet / phone) layouts share the same component rules. */
+
+.tp-root {
+  --tp-zoom: 1;
+  --tp-unit: calc(var(--tp-zoom) * 1vw);
+  --tp-ui: max(16px, 1.5vw);
+  --tp-cyan: #5ff3ff;
+  --tp-cyan-glow: rgba(0, 229, 255, 0.85);
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  color: #fff;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background: #05031a;
+}
+
+/* On wide screens the whole panorama is shown (slightly zoomed); every size below scales
+   with it through --tp-unit, and the screen above and below is filled by .tp-ext. */
+.tp-root--band {
+  --tp-zoom: 1.12;
+  overflow: hidden;
+}
+
+@media (min-aspect-ratio: 2/1) {
+  .tp-root--band { --tp-zoom: 1.05; }
+}
+
+@media (min-aspect-ratio: 12/5) {
+  .tp-root--band { --tp-zoom: 1; }
+}
+
+.tp-root--split {
+  --tp-unit: min(3.6vw, 1.8vh);
+  --tp-ui: max(14px, calc(var(--tp-unit) * 1.2));
+  align-items: flex-start;
+  background: radial-gradient(ellipse at 50% 45%, #2b1470 0%, #140a42 48%, #070420 100%);
+}
+
+.tp-root *,
+.tp-root *::before,
+.tp-root *::after {
+  box-sizing: border-box;
+}
+
+.tp-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--tp-ui) * 1.2);
+  margin: auto 0;
+}
+
+.tp-root--split .tp-content {
+  padding: calc(var(--tp-ui) * 1.2) calc(var(--tp-ui) * 1);
+}
+
+.tp-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: calc(var(--tp-ui) * 0.7);
+  font-size: var(--tp-ui);
+  font-weight: 700;
+  text-align: center;
+}
+
+.tp-header__sub {
+  font-size: 0.8em;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---------- Artwork ---------- */
+
+.tp-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tp-art {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  background: #140b3d;
+}
+
+/* Wider than the screen and centred (the root clips it). Above and below it, .tp-ext
+   mirrors and stretches the first / last rows of the artwork so the sky and the water
+   carry on to the screen edges. */
+.tp-stage--band .tp-art {
+  flex: none;
+  width: calc(var(--tp-zoom) * 100vw);
+  aspect-ratio: 5.2 / 1;
+}
+
+.tp-ext {
+  position: absolute;
+  left: 50%;
+  width: calc(var(--tp-zoom) * 100vw);
+  height: 60vh;
+  transform: translateX(-50%);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tp-ext--top { bottom: calc(100% - 1px); }
+.tp-ext--bottom { top: calc(100% - 1px); }
+
+.tp-ext__img {
+  position: absolute;
+  inset: 0;
+  transform: scaleY(-1);
+  background-repeat: no-repeat;
+  background-size: 100% calc(var(--tp-zoom) * 19.23vw * 30);
+  filter: blur(1.5px) saturate(1.1);
+}
+
+.tp-ext--top .tp-ext__img { background-position: center top; }
+.tp-ext--bottom .tp-ext__img { background-position: center bottom; }
+
+.tp-ext::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.tp-ext--top::after { background: linear-gradient(to top, rgba(5, 3, 26, 0) 0%, rgba(5, 3, 26, 0.96) 85%); }
+.tp-ext--bottom::after { background: linear-gradient(to bottom, rgba(5, 3, 26, 0) 0%, rgba(5, 3, 26, 0.96) 85%); }
+
+/* The slices are the outer 34% of the panorama; aspect = 5.2 * 0.68. */
+.tp-stage--split .tp-art {
+  display: flex;
+  aspect-ratio: 3.536 / 1;
+  width: min(100%, 84.9vh);
+  border-radius: calc(var(--tp-ui) * 1.1);
+  border: 2px solid rgba(95, 243, 255, 0.55);
+  box-shadow: 0 0 3vw rgba(0, 229, 255, 0.22);
+}
+
+.tp-slice {
+  position: relative;
+  flex: 0 0 50%;
+  overflow: hidden;
+}
+
+.tp-img {
+  display: block;
+  user-select: none;
+  object-fit: cover;
+}
+
+.tp-stage--band .tp-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tp-stage--split .tp-img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 294.12%;
+}
+
+.tp-slice--left .tp-img { left: 0; }
+.tp-slice--right .tp-img { right: 0; }
+
+.tp-img--complete {
+  animation: tp-piece-in 1.3s ease-out both;
+}
+
+.tp-stage--celebrate .tp-art {
+  animation: tp-glow 2.4s ease-out;
+}
+
+.tp-stage--loading .tp-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(95, 243, 255, 0.18) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: tp-shimmer 1.4s linear infinite;
+}
+
+.tp-art-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: var(--tp-ui);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes tp-piece-in {
+  from { opacity: 0; filter: brightness(2) saturate(1.4); }
+  to { opacity: 1; filter: none; }
+}
+
+@keyframes tp-glow {
+  0% { filter: none; }
+  35% { filter: brightness(1.3) saturate(1.35); }
+  100% { filter: none; }
+}
+
+@keyframes tp-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ---------- Overlay panel ---------- */
+
+.tp-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Frosted card floating over the middle of the skyline, clear of the CN Tower
+   (which sits about 26% from the left edge of the screen). */
+.tp-stage--band .tp-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(var(--tp-unit) * 38);
+  padding: calc(var(--tp-unit) * 2.2) calc(var(--tp-unit) * 3);
+  border: 1.5px solid rgba(95, 243, 255, 0.5);
+  border-radius: calc(var(--tp-unit) * 2.4);
+  background: rgba(8, 5, 42, 0.58);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow:
+    0 0 calc(var(--tp-unit) * 3) rgba(0, 229, 255, 0.22),
+    inset 0 0 calc(var(--tp-unit) * 2) rgba(95, 243, 255, 0.08);
+}
+
+.tp-stage--split .tp-panel {
+  width: 100%;
+  padding-top: calc(var(--tp-ui) * 1.2);
+}
+
+.tp-panel__main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--tp-unit) * 1.6);
+}
+
+.tp-stage--split .tp-panel__main {
+  flex-direction: column;
+  gap: calc(var(--tp-unit) * 1.2);
+}
+
+.tp-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tp-count {
+  font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+  font-size: calc(var(--tp-count-scale, 7.2) * var(--tp-unit));
+  font-weight: 900;
+  line-height: 0.95;
+  white-space: nowrap;
+  color: #b8f9ff;
+  -webkit-text-stroke: calc(var(--tp-unit) * 0.12) #19d9f0;
+  text-shadow:
+    0 0 calc(var(--tp-unit) * 0.5) var(--tp-cyan-glow),
+    0 0 calc(var(--tp-unit) * 1.6) rgba(0, 200, 255, 0.6),
+    0 calc(var(--tp-unit) * 0.3) calc(var(--tp-unit) * 0.3) rgba(0, 20, 80, 0.7);
+}
+
+.tp-label {
+  font-size: calc(var(--tp-unit) * 2.2);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow: 0 0 calc(var(--tp-unit) * 0.6) rgba(0, 0, 40, 0.8);
+}
+
+.tp-qr {
+  flex: none;
+  width: calc(var(--tp-unit) * 8.6);
+  height: calc(var(--tp-unit) * 8.6);
+  padding: calc(var(--tp-unit) * 0.3);
+  background: #fff;
+  border-radius: calc(var(--tp-unit) * 0.9);
+  box-shadow:
+    0 0 0 calc(var(--tp-unit) * 0.2) var(--tp-cyan),
+    0 0 calc(var(--tp-unit) * 1.6) var(--tp-cyan-glow);
+}
+
+.tp-stage--split .tp-qr {
+  width: calc(var(--tp-unit) * 12);
+  height: calc(var(--tp-unit) * 12);
+}
+
+.tp-cta {
+  margin-top: calc(var(--tp-unit) * 0.9);
+  max-width: 100%;
+  font-size: max(12px, calc(var(--tp-unit) * 1.7));
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+  text-shadow: 0 0 calc(var(--tp-unit) * 0.8) rgba(0, 229, 255, 0.55);
+}
+
+.tp-stage--split .tp-cta {
+  margin-top: calc(var(--tp-unit) * 1.2);
+  font-size: calc(var(--tp-unit) * 1.7);
+  max-width: 28em;
+}
+
+/* ---------- Status ---------- */
+
+.tp-status {
+  position: relative;
+  z-index: 2;
+  padding: 0.5em 1.2em;
+  border: 1px solid rgba(95, 243, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(10, 6, 48, 0.6);
+  font-size: calc(var(--tp-ui) * 0.9);
+  font-weight: 600;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.tp-status--completed {
+  border-color: var(--tp-cyan);
+  box-shadow: 0 0 1.2em rgba(0, 229, 255, 0.5);
+}
+
+.tp-status--verifying {
+  animation: tp-pulse 1.2s ease-in-out infinite;
+}
+
+.tp-status--error {
+  border-color: #ff5c9d;
+  color: #ffd3e4;
+}
+
+@keyframes tp-pulse {
+  50% { opacity: 0.55; }
+}
+
+.tp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-img--complete,
+  .tp-stage--celebrate .tp-art,
+  .tp-stage--loading .tp-art::after,
+  .tp-status--verifying {
+    animation: none;
+  }
+}

@@ -57,7 +57,7 @@ function App() {
     }
     return () => { stream?.close(); if (fallbackId) clearInterval(fallbackId); };
   }, [hasSession, runtimeConfig.fallbackPollIntervalMs]);
-  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews config={runtimeConfig} onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} profilePictureUrl={session.profilePictureUrl} onBack={() => setSession(null)} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
+  return <><>{!session ? <SetupPage onConnect={handleConnect} /> : session.platform === 'google' ? <GoogleReviews config={runtimeConfig} onBack={() => setSession(null)} /> : <DisplayManager followers={followers} todayGrowth={todayGrowth} username={session.displayName} profilePictureUrl={session.profilePictureUrl} onBack={() => setSession(null)} config={runtimeConfig} />}</><KioskSplash visible={!kioskReady} platform={session?.platform} onStart={handleStart} /></>;
 }
 
 export default App;

@@ -180,6 +180,7 @@ export default function GoogleReviews({ config, onBack }) {
           rating={googleData.rating}
           platformLabel="Google Reviews"
           googleReviewUrl={config?.googleReviewUrl}
+          spinConfig={config}
         />
       </div>
 

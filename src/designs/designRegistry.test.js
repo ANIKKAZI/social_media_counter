@@ -101,7 +101,8 @@ describe('Design Registry', () => {
       // All designs should be available on both
       const minInstagramDesigns = designs.filter(d => d.category === 'instagram').length;
       const holidayDesigns = designs.filter(d => d.category === 'holiday').length;
-      expect(minInstagramDesigns + holidayDesigns).toBe(designs.length);
+      const engagementDesigns = designs.filter(d => d.category === 'engagement').length;
+      expect(minInstagramDesigns + holidayDesigns + engagementDesigns).toBe(designs.length);
     });
   });
 
